@@ -5,12 +5,14 @@ class NutrientTile extends StatelessWidget {
   final bool isHigh;
   final String quantity;
 
-  const NutrientTile(
-      {Key? key,
-      required this.nutrient,
-      required this.isHigh,
-      required this.quantity})
-      : super(key: key);
+  const NutrientTile({
+    Key? key,
+    required this.nutrient,
+    required this.isHigh,
+    required this.quantity,
+  }) : super(key: key);
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -22,17 +24,16 @@ class NutrientTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(20.0),
             gradient: LinearGradient(
               colors: isHigh
-                  ? [Colors.red.shade100, Colors.red]
-                  : [Colors.green.shade100, Colors.green],
+                  ? [Colors.red.shade300, Colors.red]
+                  : [Colors.green.shade300, Colors.green],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.5), // Shadow color
                 spreadRadius: 3, // Spread radius
                 blurRadius: 5, // Blur radius
-                offset: const Offset(0, 5), // Offset from the widget
+                offset: Offset(0, 5), // Offset from the widget
               ),
             ]),
         child: Column(
