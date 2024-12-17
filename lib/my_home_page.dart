@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:read_the_label/widgets/nutrient_tile.dart';
+import 'package:read_the_label/data/nutrient_insights.dart';
 
 import 'data/dv_values.dart';
 
@@ -24,6 +23,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final ImagePicker imagePicker = ImagePicker();
   List<Map<String, dynamic>> parsedNutrients = [];
+  List<Map<String, dynamic>> goodNutrients = [];
+  List<Map<String, dynamic>> badNutrients = [];
 
   _pickImage(ImageSource imageSource) async {
     final file = await imagePicker.pickImage(source: imageSource);
@@ -39,7 +40,6 @@ class _MyHomePageState extends State<MyHomePage> {
         ? const String.fromEnvironment('GEMINI_API_KEY')
         : dotenv.env['GEMINI_API_KEY'];
 
-
     // Initialize the GenerativeModel
     final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
     final imageBytes = await _selectedFile!.readAsBytes();
@@ -52,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
         """Analyze the label, considering the attached daily value recommendations data.  Provide your response in a strictly valid JSON format with this structure:
 {
   "nutrients": [
-    {"name": "Nutrient Name", "status": "High" or "Low" or "Moderate", "quantity": "Quantity"}
+    {"name": "Nutrient Name", "status": "High" or "Low" or "Moderate", "quantity": "Quantity", "health_sign": "Good" or "Bad" or "Moderate"}
   ]
 }
 
@@ -64,11 +64,25 @@ Strictly follow the rules below for generating the response:
 5. Use %DV to determine if a serving of the food is high or low in an individual nutrient. As a general guide:
   5% DV or less of a nutrient per serving is considered low.
   20% DV or more of a nutrient per serving is considered high.
-  5% < DV < 20% of a nutrient per serving is considered moderate""");
+  5% < DV < 20% of a nutrient per serving is considered moderate
+6. Use the following rule to determine the health_sign of the nutrient:
+    If the goal is "At least", then:
+    if status is "High", then health_sign should be "Good",
+    if status is "Moderate", then health_sign should be "Moderate",
+    if status is "Low", then health_sign should be "Bad",
+    If the goal is "Less than", then:
+    if status is "Low", then health_sign should be "Good",
+    if status is "Moderate", then health_sign should be "Moderate",
+    if status is "High", then health_sign should be "Bad"
+    If the goal is "Equal to", then:
+    if status is "Low", then health_sign should be "Bad",
+    if status is "Moderate", then health_sign should be "Good",
+    if status is "High", then health_sign should be "Moderate"
+ """);
 
     final nutrientParts = nutrientData
         .map((nutrient) => TextPart(
-            "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']} (${nutrient['Goal']})"))
+        "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']} (${nutrient['Goal']})"))
         .toList();
 
     final response = await model.generateContent([
@@ -82,6 +96,17 @@ Strictly follow the rules below for generating the response:
       final jsonResponse = jsonDecode(jsonString);
       parsedNutrients =
           (jsonResponse['nutrients'] as List).cast<Map<String, dynamic>>();
+      //clear the good/bad nutrients before adding to avoid duplicates
+      goodNutrients.clear();
+      badNutrients.clear();
+      for(var nutrient in parsedNutrients)
+      {
+        if(nutrient["health_sign"] == "Good" || nutrient["health_sign"] == "Moderate"){
+          goodNutrients.add(nutrient);
+        } else {
+          badNutrients.add(nutrient);
+        }
+      }
     } catch (e) {
       print("Error parsing JSON: $e");
       // Handle the error gracefully, maybe display a message to the user
@@ -132,67 +157,56 @@ Strictly follow the rules below for generating the response:
             ),
             if (_selectedFile != null) Image(image: FileImage(_selectedFile!)),
             ElevatedButton(
-              style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white10)),
+                style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white10)),
                 onPressed: () {
                   _fetchGeneratedText();
                 },
-                child: Animate(
-                  onComplete: (controller) => controller.repeat(),
-                  child: const Text("Analyze"),
-                ).custom(
-                  duration: const Duration(seconds: 2),
-                  builder: (context, value, child) {
-                    if (child is! Text) {
-                      return child;
-                    }
-                    final text = child.data;
-                    if (text == null) {
-                      return child;
-                    }
-                    final letters = text.characters.toList();
-                    List<TextSpan> spans = [];
-
-                    for (int i = 0; i < letters.length; i++) {
-                      final hue = (value * 360 + (i * (360 / letters.length))) % 360; // Stagger colors
-                      final color = HSLColor.fromAHSL(1.0, hue, 1.0, 0.5).toColor();
-
-                      spans.add(TextSpan(
-                          text: letters[i],
-                          style: TextStyle(color: color)
-                      )
-                      );
-                    }
-
-                    return RichText(
-                      text: TextSpan(
-                          children: spans
-                      ),
-                    );
-                  },
-                )
+                child: const Text("Analyze")
             ),
-            if (_isLoading) CircularProgressIndicator(),
-            if (parsedNutrients.isNotEmpty)
-              Flexible(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // Number of columns
-                    crossAxisSpacing: 0, // Spacing between columns
-                    mainAxisSpacing: 10, // Spacing between rows
-                    childAspectRatio: 1,
+            if (_isLoading) const CircularProgressIndicator(),
+
+            //Good/Moderate nutrients
+            if(goodNutrients.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: Text("Good/Moderate Nutrients", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                   ),
-                  itemCount: parsedNutrients.length,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return NutrientTile(
-                      nutrient: parsedNutrients[index]['name'],
-                      isHigh: parsedNutrients[index]['status'] == 'High',
-                      quantity: parsedNutrients[index]['quantity'],
-                    );
-                  },
-                ),
+                  Wrap(
+                    spacing: 8.0, // Spacing between the tiles
+                    runSpacing: 8.0, //Spacing between the rows
+                    children: goodNutrients.map((nutrient) => NutrientTile(
+                      nutrient: nutrient['name'],
+                      healthSign: nutrient['health_sign'],
+                      quantity: nutrient['quantity'],
+                    )).toList(),
+                  ),
+                ],
               ),
+
+            //Bad nutrients
+            if(badNutrients.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: Text("Bad Nutrients", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  ),
+                  Wrap(
+                    spacing: 8.0, // Spacing between the tiles
+                    runSpacing: 8.0, //Spacing between the rows
+                    children: badNutrients.map((nutrient) => NutrientTile(
+                      nutrient: nutrient['name'],
+                      healthSign: nutrient['health_sign'],
+                      quantity: nutrient['quantity'],
+                      insight: nutrientInsights[nutrient['name']],
+                    )).toList(),
+                  ),
+                ],
+              )
           ],
         ),
       ),

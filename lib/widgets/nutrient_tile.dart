@@ -1,68 +1,146 @@
 import 'package:flutter/material.dart';
 
-class NutrientTile extends StatelessWidget {
+class NutrientTile extends StatefulWidget {
   final String nutrient;
-  final bool isHigh;
+  final String healthSign;
   final String quantity;
+  final String? insight;
 
   const NutrientTile({
     Key? key,
     required this.nutrient,
-    required this.isHigh,
+    required this.healthSign,
     required this.quantity,
+    this.insight,
   }) : super(key: key);
 
+  @override
+  State<NutrientTile> createState() => _NutrientTileState();
+}
 
+class _NutrientTileState extends State<NutrientTile> {
+  bool _isExpanded = false;
+  double _containerHeight = 30.0; // Initial height
+  double _paddingVertical = 5.0; // Initial padding
 
   @override
   Widget build(BuildContext context) {
+    Color startColor;
+    Color endColor;
+    IconData icon;
+
+    switch (widget.healthSign) {
+      case "Good":
+        startColor = Colors.green.shade300;
+        endColor = Colors.green;
+        icon = Icons.arrow_upward;
+        break;
+      case "Bad":
+        startColor = Colors.red.shade300;
+        endColor = Colors.red;
+        icon = Icons.arrow_downward;
+        break;
+      default: // "Moderate"
+        startColor = Colors.amber.shade300;
+        endColor = Colors.amber;
+        icon = Icons.swap_horiz;
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(left: 10.0, right: 10),
-      child: Container(
-        padding: const EdgeInsets.only(top: 10.0),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
+      padding: const EdgeInsets.only(left: 0.0, right: 0),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _isExpanded = !_isExpanded;
+            _containerHeight = _isExpanded ? 80.0 : 30.0; // Adjust expanded height as needed
+            _paddingVertical = _isExpanded ? 10.0 : 5.0;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.fastOutSlowIn,
+          padding: EdgeInsets.symmetric(vertical: _paddingVertical, horizontal: 10.0),
+          height: _containerHeight, // Assign container height here
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
             gradient: LinearGradient(
-              colors: isHigh
-                  ? [Colors.red.shade300, Colors.red]
-                  : [Colors.green.shade300, Colors.green],
+              colors: [startColor, endColor],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
             boxShadow: const [
               BoxShadow(
-                spreadRadius: 3, // Spread radius
-                blurRadius: 5, // Blur radius
-                offset: Offset(0, 5), // Offset from the widget
+                spreadRadius: 1,
+                blurRadius: 2,
+                offset: Offset(0, 2),
               ),
-            ]),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              nutrient,
-              style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(width: 16.0),
-            Row(
+            ],
+          ),
+          child: SingleChildScrollView(
+            child: _isExpanded
+                ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.nutrient,
+                      style: const TextStyle(
+                          color: Colors.black, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      widget.quantity,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 12.0,
+                    ),
+                  ],
+                ),
+                if (widget.insight != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      widget.insight!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.justify,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            )
+                : Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  quantity,
-                  style: const TextStyle(color: Colors.white, fontSize: 32),
+                  widget.nutrient,
+                  style: const TextStyle(
+                      color: Colors.black, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  widget.quantity,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
                 Icon(
-                  isHigh ? Icons.arrow_upward : Icons.arrow_downward,
+                  icon,
                   color: Colors.white,
-                  size: 32.0,
+                  size: 12.0,
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
