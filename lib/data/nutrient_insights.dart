@@ -1,6 +1,7 @@
 const Map<String, String> nutrientInsights = {
   'Energy': "Energy (calories) is needed for the body to function. Consuming too much or too little can affect weight and overall health. Aim for a balanced energy intake based on activity levels.",
-  'Added sugars': "Excessive added sugars can lead to weight gain, increased risk of type 2 diabetes, heart disease, and tooth decay. It is best to limit foods and beverages with added sugars.",
+  'Added Sugars': "Excessive added sugars can lead to weight gain, increased risk of type 2 diabetes, heart disease, and tooth decay. It is best to limit foods and beverages with added sugars.",
+  'Total Sugars': "Total sugars include both naturally occurring sugars (found in fruits, milk, etc.) and added sugars. Monitoring total sugar intake helps maintain a balanced diet and reduce health risks.",
   'Biotin': "Biotin is important for metabolism and cell growth. Deficiency is rare, but adequate intake supports overall health.",
   'Calcium': "Calcium is vital for strong bones and teeth, muscle function, and nerve signaling. Adequate intake helps prevent osteoporosis.",
   'Chloride': "Chloride helps regulate fluid balance, nerve function and digestion in the body. It is important to maintain proper level.",
@@ -26,7 +27,7 @@ const Map<String, String> nutrientInsights = {
   'Selenium': "Selenium is an antioxidant and supports thyroid function. Proper level is essential for various metabolic processes.",
   'Sodium': "High sodium intake can increase blood pressure, which elevates the risk of heart disease and stroke. It can also lead to fluid retention. It is best to consume less salt.",
   'Thiamin': "Thiamin supports energy production, nerve function, and metabolism. Adequate level is essential for various bodily processes.",
-  'Total carbohydrate': "Carbohydrates are a primary source of energy. Balance with fiber, protein, and healthy fats for sustained energy.",
+  'Carbohydrate': "Carbohydrates are a primary source of energy. Balance with fiber, protein, and healthy fats for sustained energy.",
   'Vitamin A': "Vitamin A is crucial for vision, immune function, and cell growth. Adequate amount is necessary for overall health.",
   'Vitamin B6': "Vitamin B6 supports brain development and function, immune function, and metabolism. Proper amount is essential for various bodily processes.",
   'Vitamin B12': "Vitamin B12 is essential for nerve function, DNA synthesis, and red blood cell formation. It is important for maintaining healthy blood.",
