@@ -22,18 +22,28 @@ class Logic {
   static final navKey = GlobalKey<NavigatorState>();
   Function(void Function())? _mySetState;
 
+  String _getStorageKey() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return 'dailyIntake_${today.toIso8601String()}';
+  }
+
 
   Future<void> loadDailyIntake() async {
     final prefs = await SharedPreferences.getInstance();
-    dailyIntake = (prefs.getString('dailyIntake') != null)
-        ? (jsonDecode(prefs.getString('dailyIntake')!) as Map).cast<String, double>()
+    final String storageKey = _getStorageKey();
+    dailyIntake = (prefs.getString(storageKey) != null)
+        ? (jsonDecode(prefs.getString(storageKey)!) as Map).cast<String, double>()
         : {};
   }
 
   Future<void> saveDailyIntake() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('dailyIntake', jsonEncode(dailyIntake));
+    final String storageKey = _getStorageKey();
+    await prefs.setString(storageKey, jsonEncode(dailyIntake));
   }
+
+
   Future<String> fetchGeneratedText({required File? selectedFile, required Function(void Function()) setState}) async {
     _isLoading = true;
     setState(() {});
@@ -145,30 +155,6 @@ Strictly follow the rules below for generating the response:
       }
     }
     saveDailyIntake();
-    if(navKey.currentContext != null) {
-      final currentRoute = ModalRoute.of(navKey.currentContext!);
-      if(currentRoute?.settings.name != 'daily_intake_page') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Added to today\'s intake!'),
-            action: SnackBarAction(
-              label: 'SHOW',
-              onPressed: () {
-                updateIndex(1);
-              },
-            ),
-          ),
-        );
-      }
-      else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Added to today\'s intake!'),
-            )
-        );
-      }
-    }
-
   }
 
   double getServingSize() => _servingSize;

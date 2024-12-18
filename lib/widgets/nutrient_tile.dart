@@ -83,14 +83,17 @@ class _NutrientTileState extends State<NutrientTile> {
                         Text(
                           widget.nutrient,
                           style: const TextStyle(
-                              color: Colors.black, fontSize: 12),
+                              color: Colors.black, fontSize: 12, fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400),
                           textAlign: TextAlign.center,
+
                         ),
                         const SizedBox(width: 10),
                         Text(
                           widget.quantity,
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 12),
+                              color: Colors.white, fontSize: 12, fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400),
                         ),
                         const Icon(
                           Icons.keyboard_arrow_up_sharp,
@@ -107,6 +110,8 @@ class _NutrientTileState extends State<NutrientTile> {
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white70,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w400
                           ),
                           textAlign: TextAlign.justify,
                           maxLines: 3,
@@ -121,13 +126,16 @@ class _NutrientTileState extends State<NutrientTile> {
                   children: [
                     Text(
                       widget.nutrient,
-                      style: const TextStyle(color: Colors.black, fontSize: 12),
+                      style: const TextStyle(color: Colors.black, fontSize: 12, fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400),
                       textAlign: TextAlign.center,
+
                     ),
                     const SizedBox(width: 10),
                     Text(
                       widget.quantity,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400),
                     ),
                     const Icon(
                       Icons.keyboard_arrow_down_sharp,
