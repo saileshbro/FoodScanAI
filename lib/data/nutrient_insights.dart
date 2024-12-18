@@ -9,7 +9,7 @@ const Map<String, String> nutrientInsights = {
   'Cholesterol': "High cholesterol levels in the blood can lead to the buildup of plaque in the arteries, increasing the risk of heart disease and stroke. It is important to maintain a good balance of LDL and HDL.",
   'Chromium': "Chromium helps regulate blood sugar levels and plays a role in metabolism. Adequate intake supports overall metabolic health.",
   'Copper': "Copper is essential for iron metabolism, nerve function, and immune health. Proper intake is required for good health.",
-  'Dietary Fiber': "Dietary fiber promotes digestive health, helps regulate blood sugar levels, and can lower cholesterol. A good amount of fiber should be consumed for overall health.",
+  'Fiber': "Dietary fiber promotes digestive health, helps regulate blood sugar levels, and can lower cholesterol. A good amount of fiber should be consumed for overall health.",
   'Fat': "Excessive fat intake can contribute to weight gain, high cholesterol levels, and increased risk of heart disease. Focus on healthy fats and minimize trans fat consumption.",
   'Folate/Folic Acid': "Folate is crucial for cell growth and DNA synthesis, particularly important during pregnancy. It helps prevent neural tube defects.",
   'Iodine': "Iodine is essential for thyroid hormone production. Deficiency can lead to thyroid problems and developmental issues.",
