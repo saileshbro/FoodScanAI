@@ -1,5 +1,28 @@
 import 'package:flutter/material.dart';
 
+class NutrientGrid extends StatelessWidget {
+  final List<NutrientData> nutrients;
+
+  const NutrientGrid({
+    super.key,
+    required this.nutrients,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: nutrients.map((nutrient) => NutrientTile(
+        nutrient: nutrient.name,
+        healthSign: nutrient.healthSign,
+        quantity: nutrient.quantity,
+        insight: nutrient.insight,
+      )).toList(),
+    );
+  }
+}
+
 class NutrientTile extends StatefulWidget {
   final String nutrient;
   final String healthSign;
@@ -20,8 +43,6 @@ class NutrientTile extends StatefulWidget {
 
 class _NutrientTileState extends State<NutrientTile> {
   bool _isExpanded = false;
-  double _containerHeight = 30.0; // Initial height
-  double _paddingVertical = 5.0; // Initial padding
 
   @override
   Widget build(BuildContext context) {
@@ -46,17 +67,16 @@ class _NutrientTileState extends State<NutrientTile> {
       onTap: () {
         setState(() {
           _isExpanded = !_isExpanded;
-          _containerHeight =
-              _isExpanded ? 80.0 : 30.0; // Adjust expanded height as needed
-          _paddingVertical = _isExpanded ? 10.0 : 5.0;
         });
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.fastOutSlowIn,
-        padding:
-            EdgeInsets.symmetric(vertical: _paddingVertical, horizontal: 11.0),
-        height: _containerHeight, // Assign container height here
+        width: _isExpanded ? MediaQuery.of(context).size.width : null,
+        constraints: BoxConstraints(
+          maxWidth: _isExpanded ? double.infinity : 150, // Adjust this value for desired collapsed width
+          minWidth: 120, // Minimum width when collapsed
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.0),
           gradient: LinearGradient(
@@ -72,80 +92,83 @@ class _NutrientTileState extends State<NutrientTile> {
             ),
           ],
         ),
-        child: SingleChildScrollView(
-          child: _isExpanded
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.nutrient,
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 12, fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400),
-                          textAlign: TextAlign.center,
-
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          widget.quantity,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 12, fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400),
-                        ),
-                        const Icon(
-                          Icons.keyboard_arrow_up_sharp,
-                          color: Colors.white,
-                          size: 12.0,
-                        ),
-                      ],
-                    ),
-                    if (widget.insight != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          widget.insight!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w400
-                          ),
-                          textAlign: TextAlign.justify,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                )
-              : Row(
+        child: AnimatedSize(
+          duration: const Duration(seconds: 1),
+          curve: Curves.fastOutSlowIn,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 11.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      widget.nutrient,
-                      style: const TextStyle(color: Colors.black, fontSize: 12, fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400),
-                      textAlign: TextAlign.center,
-
+                    Flexible(
+                      child: Text(
+                        widget.nutrient,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       widget.quantity,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                    const Icon(
-                      Icons.keyboard_arrow_down_sharp,
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_sharp
+                          : Icons.keyboard_arrow_down_sharp,
                       color: Colors.white,
                       size: 12.0,
                     ),
                   ],
                 ),
+                if (_isExpanded && widget.insight != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      widget.insight!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+// Data model for nutrient information
+class NutrientData {
+  final String name;
+  final String healthSign;
+  final String quantity;
+  final String? insight;
+
+  NutrientData({
+    required this.name,
+    required this.healthSign,
+    required this.quantity,
+    this.insight,
+  });
 }

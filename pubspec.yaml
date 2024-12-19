@@ -43,6 +43,7 @@ dependencies:
   percent_indicator: ^4.2.4
   pie_chart: ^5.4.0
   intl: ^0.20.1
+  dotted_border: ^2.1.0
 
 dev_dependencies:
   flutter_test:

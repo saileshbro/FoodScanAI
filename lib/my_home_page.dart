@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,6 +28,13 @@ class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker imagePicker = ImagePicker();
   final Logic _logic = Logic();
   int _currentIndex = 0;
+  final _gradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color.fromARGB(255, 25, 36, 59),
+        Color.fromARGB(255, 4, 9, 22),
+      ]);
 
   @override
   void initState() {
@@ -50,278 +59,280 @@ class _MyHomePageState extends State<MyHomePage> {
     return MaterialApp(
         navigatorKey: Logic.navKey,
         home: Scaffold(
-            backgroundColor: Colors.black45,
+            extendBody: true,
+            extendBodyBehindAppBar: true,
+            backgroundColor: const Color.fromARGB(0, 5, 23, 35),
             appBar: AppBar(
-              backgroundColor: Colors.black45,
-              forceMaterialTransparency: true,
+              backgroundColor: const Color.fromARGB(255, 4, 9, 28)
+                ..withValues(alpha: 1),
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
               title: const Text(
                 "ReadTheLabel",
                 style: TextStyle(
-                    color: Colors.white,
+                    color: const Color(0xFF2763eb),
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w500),
               ),
             ),
-            bottomNavigationBar: BottomNavigationBar(
-                backgroundColor: Colors.black26,
-                selectedItemColor: Colors.red,
-                unselectedItemColor: Colors.grey,
-                currentIndex: _currentIndex,
-                unselectedLabelStyle: const TextStyle(
-                    fontFamily: 'Poppins', fontWeight: FontWeight.w400),
-                selectedLabelStyle: const TextStyle(
-                    fontFamily: 'Poppins', fontWeight: FontWeight.w400),
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                items: const [
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.home), label: 'Home'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.food_bank), label: 'Daily Intake'),
-                ]),
-            body: IndexedStack(
-              index: _currentIndex,
-              children: [
-                _buildHomePage(context),
-                DailyIntakePage(
-                  dailyIntake: _logic.dailyIntake,
+            bottomNavigationBar: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 4, 9, 28)
+                  ..withValues(alpha: 1),
+              ),
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
+                  child: Container(
+                    color: Colors.transparent,
+                    child: BottomNavigationBar(
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      selectedItemColor: const Color(0xFF2763eb),
+                      unselectedItemColor: Colors.grey,
+                      currentIndex: _currentIndex,
+                      onTap: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
+                      items: const [
+                        BottomNavigationBarItem(
+                            icon: Icon(Icons.home), label: 'Home'),
+                        BottomNavigationBarItem(
+                            icon: Icon(Icons.food_bank), label: 'Daily Intake'),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
+              ),
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: _gradient,
+              ),
+              child: IndexedStack(
+                index: _currentIndex,
+                children: [
+                  _buildHomePage(context),
+                  DailyIntakePage(
+                    dailyIntake: _logic.dailyIntake,
+                  ),
+                ],
+              ),
             )));
   }
 
   Widget _buildHomePage(BuildContext context) {
     double tileWidth = MediaQuery.of(context).size.width / 2;
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              ElevatedButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.black)),
-                onPressed: () {
-                  _pickImage(ImageSource.gallery);
-                },
-                child: const Text(
-                  "Scan from gallery",
-                  style: TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.w400),
+      child: Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom +
+                80), // 80 is approximate height of bottom nav
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 100,
+            ),
+            Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.transparent,
                 ),
               ),
-              ElevatedButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.black)),
-                onPressed: () {
-                  _pickImage(ImageSource.camera);
-                },
-                child: const Text(
-                  "Scan label",
-                  style: TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.w400),
-                ),
-              ),
-            ],
-          ),
-          if (_selectedFile != null) Image(image: FileImage(_selectedFile!)),
-          ElevatedButton(
-            style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Colors.white10)),
-            onPressed: () {
-              _fetchData();
-            },
-            child: const Text(
-              "Analyze",
-              style:
-                  TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w400),
-            ),
-          ),
-          if (_logic.getIsLoading()) const CircularProgressIndicator(),
-
-          //Good/Moderate nutrients
-          if (_logic.getGoodNutrients().isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 20.0, top: 10.0),
-                  child: Text("NUTRIENT IN GOOD AMOUNTS",
+              child: DottedBorder(
+                borderPadding: const EdgeInsets.all(-20),
+                borderType: BorderType.RRect,
+                radius: const Radius.circular(20),
+                color: Colors.white24,
+                strokeWidth: 1,
+                dashPattern: const [
+                  6,
+                  4
+                ], // Adjust dash and gap lengths as needed
+                child: Column(
+                  children: [
+                    _selectedFile != null
+                        ? Image(image: FileImage(_selectedFile!))
+                        : const Icon(
+                            Icons.camera_alt_outlined,
+                            size: 70,
+                            color: Colors.grey,
+                          ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Scan nutrition label or choose from gallery",
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w600)),
-                ),
-                Wrap(
-                  spacing: 8.0, // Spacing between the tiles
-                  runSpacing: 8.0, //Spacing between the rows
-                  children: _logic
-                      .getGoodNutrients()
-                      .map((nutrient) => NutrientTile(
-                            nutrient: nutrient['name'],
-                            healthSign: nutrient['health_sign'],
-                            quantity: nutrient['quantity'],
-                          ))
-                      .toList(),
-                ),
-              ],
-            ),
-
-          //Bad nutrients
-          if (_logic.getBadNutrients().isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 20.0, top: 10.0),
-                  child: Text("NUTRIENTS IN BAD QUANTITY",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w600)),
-                ),
-                Wrap(
-                  spacing: 8.0, // Spacing between the tiles
-                  runSpacing: 8.0, //Spacing between the rows
-                  children: _logic
-                      .getBadNutrients()
-                      .map((nutrient) => NutrientTile(
-                            nutrient: nutrient['name'],
-                            healthSign: nutrient['health_sign'],
-                            quantity: nutrient['quantity'],
-                            insight: nutrientInsights[nutrient['name']],
-                          ))
-                      .toList(),
-                ),
-              ],
-            ),
-          if (_logic.getServingSize() > 0)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Slider(
-                      value: _logic.sliderValue,
-                      min: 0,
-                      max: _logic.getServingSize(),
-                      onChanged: (newValue) {
-                        _logic.updateSliderValue(newValue, setState);
-                      }),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      "Serving Size: ${_logic.sliderValue.toStringAsFixed(2)} g",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                          color: Colors.white70,
+                          fontSize: 14,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w400),
                     ),
-                  ),
-                  Builder(builder: (context) {
-                    return ElevatedButton(
-                      style: ButtonStyle(
-                          backgroundColor:
-                              WidgetStateProperty.all(Colors.white10)),
-                      onPressed: () {
-                        _logic.addToDailyIntake(context, (index) {
-                          setState(() {
-                            _currentIndex = index;
-                          });
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Added to today\'s intake!',
-                                style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w400)),
-                            action: SnackBarAction(
-                              label: 'SHOW',
-                              onPressed: () {
-                                setState(() {
-                                  _currentIndex = 1;
-                                });
-                              },
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.qr_code_scanner_outlined,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            "Scan Now",
+                            style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: const Color(0xff2563eb),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
                             ),
                           ),
-                        );
-                      },
-                      child: const Text(
-                        "Add to today's intake",
-                        style: TextStyle(
-                            fontFamily: 'Poppins', fontWeight: FontWeight.w400),
-                      ),
-                    );
-                  })
-                ],
+                          onPressed: () => _pickImage(ImageSource.camera),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.photo_library,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            "Gallery",
+                            style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: const Color(0xff1f2937),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () => _pickImage(ImageSource.gallery),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          if (_logic.getServingSize() == 0)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                backgroundColor: const Color(0xff1f2937),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+              onPressed: () {
+                _fetchData();
+              },
+              child: const Text("Analyze"),
+            ),
+            if (_logic.getIsLoading()) const CircularProgressIndicator(),
+
+            //Good/Moderate nutrients
+            if (_logic.getGoodNutrients().isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Serving size not found, please enter it manually',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: Text("Optimal Nutrients",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold)),
                   ),
-                  TextField(
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      setState(() {
-                        _logic.updateSliderValue(
-                            double.tryParse(value) ?? 0.0, setState);
-                      });
-                    },
-                    decoration: const InputDecoration(
-                        hintText: "Enter serving size in grams or ml",
-                        hintStyle: TextStyle(
-                            color: Colors.white54,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600)),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600),
+                  Wrap(
+                    spacing: 8.0, // Spacing between the tiles
+                    runSpacing: 8.0, //Spacing between the rows
+                    children: _logic
+                        .getGoodNutrients()
+                        .map((nutrient) => NutrientTile(
+                              nutrient: nutrient['name'],
+                              healthSign: nutrient['health_sign'],
+                              quantity: nutrient['quantity'],
+                            ))
+                        .toList(),
                   ),
-                  if (_logic.getServingSize() > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Slider(
-                          value: _logic.sliderValue,
-                          min: 0,
-                          max: _logic.getServingSize(),
-                          onChanged: (newValue) {
-                            _logic.updateSliderValue(newValue, setState);
-                          }),
-                    ),
-                  if (_logic.getServingSize() > 0)
+                ],
+              ),
+
+            //Bad nutrients
+            if (_logic.getBadNutrients().isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: Text("Watch Out",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                  Wrap(
+                    spacing: 8.0, // Spacing between the tiles
+                    runSpacing: 8.0, //Spacing between the rows
+                    children: _logic
+                        .getBadNutrients()
+                        .map((nutrient) => NutrientTile(
+                              nutrient: nutrient['name'],
+                              healthSign: nutrient['health_sign'],
+                              quantity: nutrient['quantity'],
+                              insight: nutrientInsights[nutrient['name']],
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ),
+            if (_logic.getServingSize() > 0)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Slider(
+                        value: _logic.sliderValue,
+                        min: 0,
+                        max: _logic.getServingSize(),
+                        onChanged: (newValue) {
+                          _logic.updateSliderValue(newValue, setState);
+                        }),
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
                         "Serving Size: ${_logic.sliderValue.toStringAsFixed(2)} g",
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
-                  if (_logic.getServingSize() > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Builder(builder: (context) {
-                        return ElevatedButton(
+                    Builder(builder: (context) {
+                      return ElevatedButton(
                           style: ButtonStyle(
                               backgroundColor:
                                   WidgetStateProperty.all(Colors.white10)),
@@ -346,14 +357,90 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             );
                           },
-                          child: const Text("Add to today's intake"),
-                        );
-                      }),
-                    )
-                ],
+                          child: const Text("Add to today's intake"));
+                    })
+                  ],
+                ),
               ),
-            )
-        ],
+            if (_logic.getServingSize() == 0 &&
+                _logic.parsedNutrients.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Serving size not found, please enter it manually',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    TextField(
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        setState(() {
+                          _logic.updateSliderValue(
+                              double.tryParse(value) ?? 0.0, setState);
+                        });
+                      },
+                      decoration: const InputDecoration(
+                          hintText: "Enter serving size in grams or ml",
+                          hintStyle: TextStyle(color: Colors.white54)),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    if (_logic.getServingSize() > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Slider(
+                            value: _logic.sliderValue,
+                            min: 0,
+                            max: _logic.getServingSize(),
+                            onChanged: (newValue) {
+                              _logic.updateSliderValue(newValue, setState);
+                            }),
+                      ),
+                    if (_logic.getServingSize() > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Serving Size: ${_logic.sliderValue.toStringAsFixed(2)} g",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    if (_logic.getServingSize() > 0)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Builder(builder: (context) {
+                            return ElevatedButton(
+                                style: ButtonStyle(
+                                    backgroundColor: WidgetStateProperty.all(
+                                        Colors.white10)),
+                                onPressed: () {
+                                  _logic.addToDailyIntake(context, (index) {
+                                    setState(() {
+                                      _currentIndex = index;
+                                    });
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          'Added to today\'s intake!'),
+                                      action: SnackBarAction(
+                                        label: 'SHOW',
+                                        onPressed: () {
+                                          setState(() {
+                                            _currentIndex = 1;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: const Text("Add to today's intake"));
+                          }))
+                  ],
+                ),
+              )
+          ],
+        ),
       ),
     );
   }
@@ -415,6 +502,9 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
+              height: 80,
+            ),
+            SizedBox(
               height: 40,
               child: ListView.builder(
                   scrollDirection: Axis.horizontal,
@@ -455,9 +545,8 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                                 fontWeight: _selectedDate.year == date.year &&
                                         _selectedDate.month == date.month &&
                                         _selectedDate.day == date.day
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                fontFamily: 'Poppins',
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                           ),
@@ -471,8 +560,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
               style: const TextStyle(
                   fontSize: 18,
                   color: Colors.white,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600),
+                  fontWeight: FontWeight.bold),
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
@@ -487,8 +575,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600),
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16.0),
             ..._buildNutrientProgress(_dailyIntake),
@@ -502,8 +589,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                   style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600),
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             const SizedBox(height: 16.0),
@@ -529,11 +615,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
             children: [
               Text(
                 '$nutrientName: ${currentIntake.toStringAsFixed(2)} / ${nutrient['Current Daily Value']}',
-                style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400),
+                style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
@@ -563,11 +645,6 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
     return chartData.isNotEmpty
         ? PieChart(
             dataMap: chartData,
-            legendOptions: const LegendOptions(
-                legendTextStyle: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400)),
             colorList: const [
               Colors.greenAccent,
               Colors.amberAccent,
@@ -583,11 +660,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
           )
         : const Text(
             "No Data to display Pie Chart",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600),
+            style: TextStyle(color: Colors.white, fontSize: 16),
           );
   }
 }

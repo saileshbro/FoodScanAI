@@ -23,6 +23,7 @@ const Map<String, String> nutrientInsights = {
   'Potassium': "Potassium helps regulate fluid balance, nerve signals, and muscle contractions. It is important for maintaining healthy blood pressure.",
   'Protein': "Protein is essential for building and repairing tissues, and for various biological processes. Sufficient intake is required for growth and repair.",
   'Riboflavin': "Riboflavin is essential for energy production and cell growth. It helps in various metabolic processes.",
+  'Saturated fat': "High saturated fat intake can raise LDL ('bad') cholesterol levels, increasing the risk of heart disease. Consume less food that has saturated fat.",
   'Saturated Fat': "High saturated fat intake can raise LDL ('bad') cholesterol levels, increasing the risk of heart disease. Consume less food that has saturated fat.",
   'Selenium': "Selenium is an antioxidant and supports thyroid function. Proper level is essential for various metabolic processes.",
   'Sodium': "High sodium intake can increase blood pressure, which elevates the risk of heart disease and stroke. It can also lead to fluid retention. It is best to consume less salt.",
