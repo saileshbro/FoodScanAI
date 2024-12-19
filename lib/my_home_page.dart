@@ -131,6 +131,67 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildHomePage(BuildContext context) {
     double tileWidth = MediaQuery.of(context).size.width / 2;
+    // Add this helper method to the class
+    Widget _buildPortionButton(
+        BuildContext context, double portion, String label) {
+      bool isSelected =
+          (_logic.sliderValue / _logic.getServingSize()).round() == portion;
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              isSelected ? const Color(0xff2563eb) : const Color(0xff1f2937),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () {
+          setState(() {
+            _logic.updateSliderValue(
+                _logic.getServingSize() * portion, setState);
+          });
+        },
+        child: Text(label, style: const TextStyle(color: Colors.white)),
+      );
+    }
+
+    Widget _buildCustomPortionButton(BuildContext context) {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xff1f2937),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xff1f2937),
+              title: const Text('Enter Custom Amount',
+                  style: TextStyle(color: Colors.white)),
+              content: TextField(
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Enter amount in grams',
+                  hintStyle: TextStyle(color: Colors.white54),
+                ),
+                onChanged: (value) {
+                  _logic.updateSliderValue(
+                      double.tryParse(value) ?? 0.0, setState);
+                },
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        },
+        child: const Text("Custom", style: TextStyle(color: Colors.white)),
+      );
+    }
+
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -257,85 +318,204 @@ class _MyHomePageState extends State<MyHomePage> {
 
             //Good/Moderate nutrients
             if (_logic.getGoodNutrients().isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
-                    child: Text("Optimal Nutrients",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                  Wrap(
-                    spacing: 8.0, // Spacing between the tiles
-                    runSpacing: 8.0, //Spacing between the rows
-                    children: _logic
-                        .getGoodNutrients()
-                        .map((nutrient) => NutrientTile(
-                              nutrient: nutrient['name'],
-                              healthSign: nutrient['health_sign'],
-                              quantity: nutrient['quantity'],
-                            ))
-                        .toList(),
-                  ),
-                ],
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4CAF50),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Optimal Nutrients",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _logic
+                            .getGoodNutrients()
+                            .map((nutrient) => Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: NutrientTile(
+                                    nutrient: nutrient['name'],
+                                    healthSign: nutrient['health_sign'],
+                                    quantity: nutrient['quantity'],
+                                    insight: nutrientInsights[nutrient['name']],
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
             //Bad nutrients
             if (_logic.getBadNutrients().isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 20.0, top: 10.0),
-                    child: Text("Watch Out",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                  Wrap(
-                    spacing: 8.0, // Spacing between the tiles
-                    runSpacing: 8.0, //Spacing between the rows
-                    children: _logic
-                        .getBadNutrients()
-                        .map((nutrient) => NutrientTile(
-                              nutrient: nutrient['name'],
-                              healthSign: nutrient['health_sign'],
-                              quantity: nutrient['quantity'],
-                              insight: nutrientInsights[nutrient['name']],
-                            ))
-                        .toList(),
-                  ),
-                ],
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF5252), // Red accent bar
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Watch Out",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _logic
+                            .getBadNutrients()
+                            .map((nutrient) => Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: NutrientTile(
+                                    nutrient: nutrient['name'],
+                                    healthSign: nutrient['health_sign'],
+                                    quantity: nutrient['quantity'],
+                                    insight: nutrientInsights[nutrient['name']],
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             if (_logic.getServingSize() > 0)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    Slider(
-                        value: _logic.sliderValue,
-                        min: 0,
-                        max: _logic.getServingSize(),
-                        onChanged: (newValue) {
-                          _logic.updateSliderValue(newValue, setState);
-                        }),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        "Serving Size: ${_logic.sliderValue.toStringAsFixed(2)} g",
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          "Serving Size: ${_logic.getServingSize().toStringAsFixed(2)} g",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit,
+                              color: Colors.white60, size: 20),
+                          onPressed: () {
+                            // Show edit dialog
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor: const Color(0xff1f2937),
+                                title: const Text('Edit Serving Size',
+                                    style: TextStyle(color: Colors.white)),
+                                content: TextField(
+                                  keyboardType: TextInputType.number,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter serving size in grams',
+                                    hintStyle: TextStyle(color: Colors.white54),
+                                  ),
+                                  onChanged: (value) {
+                                    _logic.updateServingSize(
+                                        double.tryParse(value) ?? 0.0);
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    child: const Text('OK'),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    Builder(builder: (context) {
-                      return ElevatedButton(
-                          style: ButtonStyle(
-                              backgroundColor:
-                                  WidgetStateProperty.all(Colors.white10)),
+                    const SizedBox(height: 16),
+
+                    // Replace slider with a more intuitive portion selector
+                    const Text(
+                      "How much did you consume?",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildPortionButton(context, 0.25, "¼"),
+                        _buildPortionButton(context, 0.5, "½"),
+                        _buildPortionButton(context, 0.75, "¾"),
+                        _buildPortionButton(context, 1.0, "1"),
+                        _buildCustomPortionButton(context),
+                      ],
+                    ),
+                    // Show selected amount
+                    if (_logic.sliderValue > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          "Selected: ${_logic.sliderValue.toStringAsFixed(2)} g",
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 14),
+                        ),
+                      ),
+                    Builder(
+                      builder: (context) {
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff2563eb),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            minimumSize: const Size(
+                                200, 50), // Set minimum width and height
+                          ),
                           onPressed: () {
                             _logic.addToDailyIntake(context, (index) {
                               setState(() {
@@ -344,10 +524,11 @@ class _MyHomePageState extends State<MyHomePage> {
                             });
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    const Text('Added to today\'s intake!'),
+                                content: const Text(
+                                    'Added to today\'s intake!'), // Updated message
                                 action: SnackBarAction(
-                                  label: 'SHOW',
+                                  label:
+                                      'VIEW', // Changed from 'SHOW' to 'VIEW'
                                   onPressed: () {
                                     setState(() {
                                       _currentIndex = 1;
@@ -357,8 +538,28 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             );
                           },
-                          child: const Text("Add to today's intake"));
-                    })
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Add to today's intake", // New, more concise title
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

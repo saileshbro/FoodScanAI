@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import 'data/dv_values.dart';
+
 class Logic {
   String _generatedText = "";
   File? _selectedFile;
@@ -28,12 +29,12 @@ class Logic {
     return 'dailyIntake_${today.toIso8601String()}';
   }
 
-
   Future<void> loadDailyIntake() async {
     final prefs = await SharedPreferences.getInstance();
     final String storageKey = _getStorageKey();
     dailyIntake = (prefs.getString(storageKey) != null)
-        ? (jsonDecode(prefs.getString(storageKey)!) as Map).cast<String, double>()
+        ? (jsonDecode(prefs.getString(storageKey)!) as Map)
+            .cast<String, double>()
         : {};
   }
 
@@ -43,8 +44,9 @@ class Logic {
     await prefs.setString(storageKey, jsonEncode(dailyIntake));
   }
 
-
-  Future<String> fetchGeneratedText({required File? selectedFile, required Function(void Function()) setState}) async {
+  Future<String> fetchGeneratedText(
+      {required File? selectedFile,
+      required Function(void Function()) setState}) async {
     _isLoading = true;
     setState(() {});
     print("_fetchGeneratedText() is called");
@@ -96,7 +98,7 @@ Strictly follow the rules below for generating the response:
 
     final nutrientParts = nutrientData
         .map((nutrient) => TextPart(
-        "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']} (${nutrient['Goal']})"))
+            "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']} (${nutrient['Goal']})"))
         .toList();
 
     final response = await model.generateContent([
@@ -108,10 +110,13 @@ Strictly follow the rules below for generating the response:
       final jsonString = _generatedText.substring(
           _generatedText.indexOf('{'), _generatedText.lastIndexOf('}') + 1);
       final jsonResponse = jsonDecode(jsonString);
-      if (jsonResponse.containsKey("serving_size") && jsonResponse["serving_size"] != null) {
-        _servingSize = jsonResponse["serving_size"] == "NA"? 0.0 : double.parse(jsonResponse["serving_size"].replaceAll(RegExp(r'[^0-9\.]'), ''));
-      }
-      else {
+      if (jsonResponse.containsKey("serving_size") &&
+          jsonResponse["serving_size"] != null) {
+        _servingSize = jsonResponse["serving_size"] == "NA"
+            ? 0.0
+            : double.parse(jsonResponse["serving_size"]
+                .replaceAll(RegExp(r'[^0-9\.]'), ''));
+      } else {
         _servingSize = 0.0;
       }
       parsedNutrients =
@@ -119,9 +124,9 @@ Strictly follow the rules below for generating the response:
       //clear the good/bad nutrients before adding to avoid duplicates
       goodNutrients.clear();
       badNutrients.clear();
-      for(var nutrient in parsedNutrients)
-      {
-        if(nutrient["health_sign"] == "Good" || nutrient["health_sign"] == "Moderate"){
+      for (var nutrient in parsedNutrients) {
+        if (nutrient["health_sign"] == "Good" ||
+            nutrient["health_sign"] == "Moderate") {
           goodNutrients.add(nutrient);
         } else {
           badNutrients.add(nutrient);
@@ -142,11 +147,13 @@ Strictly follow the rules below for generating the response:
   }
 
   void addToDailyIntake(BuildContext context, Function(int) updateIndex) {
-    if(parsedNutrients.isEmpty) return;
-    for (var nutrient in parsedNutrients){
+    if (parsedNutrients.isEmpty) return;
+    for (var nutrient in parsedNutrients) {
       final name = nutrient['name'];
-      final quantity = double.tryParse(nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ?? 0;
-      double adjustedQuantity = quantity * (sliderValue / _servingSize) ;
+      final quantity = double.tryParse(
+              nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+          0;
+      double adjustedQuantity = quantity * (sliderValue / _servingSize);
 
       if (dailyIntake.containsKey(name)) {
         dailyIntake[name] = dailyIntake[name]! + adjustedQuantity;
@@ -163,7 +170,7 @@ Strictly follow the rules below for generating the response:
 
   bool getIsLoading() => _isLoading;
 
-  void setSetState (Function(void Function()) setState){
+  void setSetState(Function(void Function()) setState) {
     _mySetState = setState;
   }
 
@@ -171,22 +178,22 @@ Strictly follow the rules below for generating the response:
     sliderValue = newValue;
     setState(() {});
   }
-  static GlobalKey<NavigatorState> getNavKey() => navKey;
 
+  static GlobalKey<NavigatorState> getNavKey() => navKey;
 
   Map<String, double> getPieChartData(Map<String, double> dailyIntake) {
     Map<String, double> chartData = {};
     for (var nutrient in nutrientData) {
       String nutrientName = nutrient['Nutrient'].trim();
-      if(dailyIntake.containsKey(nutrientName)){
+      if (dailyIntake.containsKey(nutrientName)) {
         try {
-          double dvValue = double.parse(nutrient['Current Daily Value'].replaceAll(RegExp(r'[^0-9\.]'), ''));
+          double dvValue = double.parse(nutrient['Current Daily Value']
+              .replaceAll(RegExp(r'[^0-9\.]'), ''));
           double percent = dailyIntake[nutrientName]! / dvValue;
-          if(percent > 0.0) {
+          if (percent > 0.0) {
             chartData[nutrientName] = percent > 1.0 ? 1.0 : percent;
           }
-        }
-        catch (e){
+        } catch (e) {
           print("Error in parsing to double in pie chart builder: $e");
         }
       }
@@ -194,24 +201,31 @@ Strictly follow the rules below for generating the response:
     return chartData;
   }
 
-  String? getInsights(Map<String, double> dailyIntake)
-  {
-    for (var nutrient in nutrientData){
+  String? getInsights(Map<String, double> dailyIntake) {
+    for (var nutrient in nutrientData) {
       String nutrientName = nutrient['Nutrient'];
-      if(dailyIntake.containsKey(nutrientName)) {
+      if (dailyIntake.containsKey(nutrientName)) {
         try {
-          double dvValue = double.parse(nutrient['Current Daily Value'].replaceAll(RegExp(r'[^0-9\.]'), ''));
+          double dvValue = double.parse(nutrient['Current Daily Value']
+              .replaceAll(RegExp(r'[^0-9\.]'), ''));
           double percent = dailyIntake[nutrientName]! / dvValue;
-          if(percent > 1.0){
+          if (percent > 1.0) {
             return "You have exceeded the recommended daily intake of $nutrientName";
           }
-        }
-        catch (e) {
+        } catch (e) {
           print("Error parsing to double: $e");
         }
-
       }
     }
     return null;
+  }
+
+  void updateServingSize(double newSize) {
+    _servingSize = newSize;
+    // Reset slider value when serving size changes
+    sliderValue = 0.0;
+    if (_mySetState != null) {
+      _mySetState!(() {});
+    }
   }
 }

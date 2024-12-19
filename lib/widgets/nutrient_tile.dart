@@ -13,12 +13,14 @@ class NutrientGrid extends StatelessWidget {
     return Wrap(
       spacing: 8.0,
       runSpacing: 8.0,
-      children: nutrients.map((nutrient) => NutrientTile(
-        nutrient: nutrient.name,
-        healthSign: nutrient.healthSign,
-        quantity: nutrient.quantity,
-        insight: nutrient.insight,
-      )).toList(),
+      children: nutrients
+          .map((nutrient) => NutrientTile(
+                nutrient: nutrient.name,
+                healthSign: nutrient.healthSign,
+                quantity: nutrient.quantity,
+                insight: nutrient.insight,
+              ))
+          .toList(),
     );
   }
 }
@@ -46,21 +48,21 @@ class _NutrientTileState extends State<NutrientTile> {
 
   @override
   Widget build(BuildContext context) {
-    Color startColor;
-    Color endColor;
+    Color backgroundColor;
+    IconData statusIcon;
 
     switch (widget.healthSign) {
       case "Good":
-        startColor = Colors.green.shade300;
-        endColor = Colors.green;
+        backgroundColor = const Color(0xFF4CAF50).withOpacity(0.15);
+        statusIcon = Icons.check_circle_outline;
         break;
       case "Bad":
-        startColor = Colors.red.shade300;
-        endColor = Colors.red;
+        backgroundColor = const Color(0xFFFF5252).withOpacity(0.15);
+        statusIcon = Icons.warning_outlined;
         break;
       default: // "Moderate"
-        startColor = Colors.amber.shade300;
-        endColor = Colors.amber;
+        backgroundColor = const Color(0xFFFFC107).withOpacity(0.15);
+        statusIcon = Icons.info_outline;
     }
 
     return GestureDetector(
@@ -72,84 +74,99 @@ class _NutrientTileState extends State<NutrientTile> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.fastOutSlowIn,
-        width: _isExpanded ? MediaQuery.of(context).size.width : null,
+        width: _isExpanded ? MediaQuery.of(context).size.width - 32 : null,
         constraints: BoxConstraints(
-          maxWidth: _isExpanded ? double.infinity : 150, // Adjust this value for desired collapsed width
-          minWidth: 120, // Minimum width when collapsed
+          maxWidth: _isExpanded ? double.infinity : 160,
+          minWidth: 140,
+          minHeight: 70, // Add minimum height
+          maxHeight: _isExpanded ? 300 : 70,
         ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.0),
-          gradient: LinearGradient(
-            colors: [startColor, endColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(
+            color: widget.healthSign == "Good"
+                ? const Color(0xFF4CAF50).withOpacity(0.3)
+                : widget.healthSign == "Bad"
+                    ? const Color(0xFFFF5252).withOpacity(0.3)
+                    : const Color(0xFFFFC107).withOpacity(0.3),
+            width: 1,
           ),
-          boxShadow: const [
-            BoxShadow(
-              spreadRadius: 1,
-              blurRadius: 2,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
-        child: AnimatedSize(
-          duration: const Duration(seconds: 1),
-          curve: Curves.fastOutSlowIn,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 11.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.nutrient,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      widget.quantity,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up_sharp
-                          : Icons.keyboard_arrow_down_sharp,
-                      color: Colors.white,
-                      size: 12.0,
-                    ),
-                  ],
-                ),
-                if (_isExpanded && widget.insight != null)
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.0),
+          child: SingleChildScrollView(
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn,
+              alignment: Alignment.topCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      widget.insight!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.justify,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              statusIcon,
+                              size: 20,
+                              color: widget.healthSign == "Good"
+                                  ? const Color(0xFF4CAF50)
+                                  : widget.healthSign == "Bad"
+                                      ? const Color(0xFFFF5252)
+                                      : const Color(0xFFFFC107),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.nutrient,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.quantity,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_isExpanded && widget.insight != null)
+                          AnimatedOpacity(
+                            duration: const Duration(milliseconds: 300),
+                            opacity: _isExpanded ? 1.0 : 0.0,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Text(
+                                widget.insight!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.8),
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
