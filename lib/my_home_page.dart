@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -15,6 +16,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:read_the_label/logic.dart';
 
 import 'data/dv_values.dart';
+import 'widgets/portion_buttons.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -35,11 +37,53 @@ class _MyHomePageState extends State<MyHomePage> {
         Color.fromARGB(255, 25, 36, 59),
         Color.fromARGB(255, 4, 9, 22),
       ]);
+  final _duration = const Duration(milliseconds: 300);
+  bool _isScanning = false;
+  double _scanLinePosition = 0.0;
+  Timer? _scanTimer;
+
+  void _startScanAnimation() {
+    setState(() {
+      _isScanning = true;
+      _scanLinePosition = 0.0;
+    });
+
+    _scanTimer?.cancel();
+
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!mounted || !_logic.getIsLoading()) {
+        timer.cancel();
+        if (mounted) {
+          setState(() {
+            _isScanning = false;
+            _scanLinePosition = 0.0;
+          });
+        }
+        return;
+      }
+
+      if (mounted && _isScanning) {
+        setState(() {
+          _scanLinePosition += 2;
+          if (_scanLinePosition > MediaQuery.of(context).size.height) {
+            _scanLinePosition = 0;
+          }
+        });
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _logic.loadDailyIntake();
+  }
+
+  @override
+  void dispose() {
+    _scanTimer?.cancel();
+    _isScanning = false;
+    super.dispose();
   }
 
   _pickImage(ImageSource imageSource) async {
@@ -50,147 +94,114 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _fetchData() {
+    _startScanAnimation();
     _logic.fetchGeneratedText(selectedFile: _selectedFile, setState: setState);
+  }
+
+  void _switchTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     _logic.setSetState(setState);
-    return MaterialApp(
-        navigatorKey: Logic.navKey,
-        home: Scaffold(
-            extendBody: true,
-            extendBodyBehindAppBar: true,
-            backgroundColor: const Color.fromARGB(0, 5, 23, 35),
-            appBar: AppBar(
-              backgroundColor: const Color.fromARGB(255, 4, 9, 28)
-                ..withValues(alpha: 1),
-              flexibleSpace: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
-                  child: Container(
-                    color: Colors.transparent,
-                  ),
-                ),
-              ),
-              title: const Text(
-                "ReadTheLabel",
-                style: TextStyle(
-                    color: const Color(0xFF2763eb),
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500),
-              ),
+    return Scaffold(
+      extendBody: true,
+      extendBodyBehindAppBar: true,
+      backgroundColor: const Color.fromARGB(0, 5, 23, 35),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 4, 9, 28)
+          ..withValues(alpha: 1),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
+            child: Container(
+              color: Colors.transparent,
             ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 4, 9, 28)
-                  ..withValues(alpha: 1),
-              ),
-              child: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
-                  child: Container(
-                    color: Colors.transparent,
-                    child: BottomNavigationBar(
-                      elevation: 0,
-                      backgroundColor: Colors.transparent,
-                      selectedItemColor: const Color(0xFF2763eb),
-                      unselectedItemColor: Colors.grey,
-                      currentIndex: _currentIndex,
-                      onTap: (index) {
-                        setState(() {
-                          _currentIndex = index;
-                        });
-                      },
-                      items: const [
-                        BottomNavigationBarItem(
-                            icon: Icon(Icons.home), label: 'Home'),
-                        BottomNavigationBarItem(
-                            icon: Icon(Icons.food_bank), label: 'Daily Intake'),
-                      ],
+          ),
+        ),
+        title: const Text(
+          "ReadTheLabel",
+          style: TextStyle(
+              color: const Color(0xFF2763eb),
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500),
+        ),
+      ),
+      bottomNavigationBar: AnimatedContainer(
+        duration: _duration,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 4, 9, 28)..withValues(alpha: 1),
+          ),
+          child: ClipRRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 1000, sigmaY: 1000),
+              child: Container(
+                color: Colors.transparent,
+                child: BottomNavigationBar(
+                  selectedLabelStyle: const TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.w400),
+                  unselectedLabelStyle: const TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.w400),
+                  backgroundColor: Colors.transparent,
+                  selectedItemColor: const Color(0xFF2763eb),
+                  unselectedItemColor: Colors.grey,
+                  currentIndex: _currentIndex,
+                  onTap: _switchTab,
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home_outlined),
+                      label: 'Home',
                     ),
-                  ),
+                    BottomNavigationBarItem(
+                        icon: Icon(Icons.food_bank_outlined),
+                        label: 'Daily Intake'),
+                  ],
                 ),
               ),
             ),
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: _gradient,
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: _gradient,
+        ),
+        child: AnimatedSwitcher(
+          duration: _duration,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          child: IndexedStack(
+            key: ValueKey<int>(_currentIndex),
+            index: _currentIndex,
+            children: [
+              AnimatedOpacity(
+                  opacity: _currentIndex == 0 ? 1.0 : 0.0,
+                  duration: _duration,
+                  child: _buildHomePage(context)),
+              AnimatedOpacity(
+                opacity: _currentIndex == 1 ? 1.0 : 0.0,
+                duration: _duration,
+                child: DailyIntakePage(
+                  dailyIntake: _logic.dailyIntake,
+                ),
               ),
-              child: IndexedStack(
-                index: _currentIndex,
-                children: [
-                  _buildHomePage(context),
-                  DailyIntakePage(
-                    dailyIntake: _logic.dailyIntake,
-                  ),
-                ],
-              ),
-            )));
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildHomePage(BuildContext context) {
     double tileWidth = MediaQuery.of(context).size.width / 2;
-    // Add this helper method to the class
-    Widget _buildPortionButton(
-        BuildContext context, double portion, String label) {
-      bool isSelected =
-          (_logic.sliderValue / _logic.getServingSize()).round() == portion;
-      return ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isSelected ? const Color(0xff2563eb) : const Color(0xff1f2937),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: () {
-          setState(() {
-            _logic.updateSliderValue(
-                _logic.getServingSize() * portion, setState);
-          });
-        },
-        child: Text(label, style: const TextStyle(color: Colors.white)),
-      );
-    }
-
-    Widget _buildCustomPortionButton(BuildContext context) {
-      return ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xff1f2937),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xff1f2937),
-              title: const Text('Enter Custom Amount',
-                  style: TextStyle(color: Colors.white)),
-              content: TextField(
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Enter amount in grams',
-                  hintStyle: TextStyle(color: Colors.white54),
-                ),
-                onChanged: (value) {
-                  _logic.updateSliderValue(
-                      double.tryParse(value) ?? 0.0, setState);
-                },
-              ),
-              actions: [
-                TextButton(
-                  child: const Text('OK'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          );
-        },
-        child: const Text("Custom", style: TextStyle(color: Colors.white)),
-      );
-    }
 
     return SingleChildScrollView(
       child: Padding(
@@ -201,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               height: 100,
             ),
             Container(
@@ -226,7 +237,36 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Column(
                   children: [
                     _selectedFile != null
-                        ? Image(image: FileImage(_selectedFile!))
+                        ? Stack(
+                            children: [
+                              Image(image: FileImage(_selectedFile!)),
+                              if (_logic.getIsLoading() && _isScanning)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top: _scanLinePosition,
+                                  child: Container(
+                                    height: 2,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.blue.withOpacity(0),
+                                          Colors.blue.withOpacity(0.8),
+                                          Colors.blue.withOpacity(0),
+                                        ],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.blue.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          spreadRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          )
                         : const Icon(
                             Icons.camera_alt_outlined,
                             size: 70,
@@ -298,23 +338,96 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                backgroundColor: const Color(0xff1f2937),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+            if (_selectedFile != null)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2763eb), Color(0xFF6B8CEF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2763eb).withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    _fetchData();
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, size: 20, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        "Analyze",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              onPressed: () {
-                _fetchData();
-              },
-              child: const Text("Analyze"),
-            ),
-            if (_logic.getIsLoading()) const CircularProgressIndicator(),
+            if (_logic.getIsLoading())
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2763eb).withOpacity(0.2),
+                            blurRadius: 12,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: const CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF2763eb)),
+                        strokeWidth: 3,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Analyzing nutrition label...",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             //Good/Moderate nutrients
             if (_logic.getGoodNutrients().isNotEmpty)
@@ -342,6 +455,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                         ],
@@ -396,6 +510,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                         ],
@@ -430,10 +545,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          "Serving Size: ${_logic.getServingSize().toStringAsFixed(2)} g",
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 4, 9, 22),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xFF2763eb),
+                            ),
+                          ),
+                          child: Text(
+                            "Serving Size: ${_logic.getServingSize().round()} g",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontFamily: 'Poppins'),
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit,
@@ -445,13 +573,17 @@ class _MyHomePageState extends State<MyHomePage> {
                               builder: (context) => AlertDialog(
                                 backgroundColor: const Color(0xff1f2937),
                                 title: const Text('Edit Serving Size',
-                                    style: TextStyle(color: Colors.white)),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'Poppins')),
                                 content: TextField(
                                   keyboardType: TextInputType.number,
                                   style: const TextStyle(color: Colors.white),
                                   decoration: const InputDecoration(
                                     hintText: 'Enter serving size in grams',
-                                    hintStyle: TextStyle(color: Colors.white54),
+                                    hintStyle: TextStyle(
+                                        color: Colors.white54,
+                                        fontFamily: 'Poppins'),
                                   ),
                                   onChanged: (value) {
                                     _logic.updateServingSize(
@@ -460,7 +592,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    child: const Text('OK'),
+                                    child: const Text('OK',
+                                        style:
+                                            TextStyle(fontFamily: 'Poppins')),
                                     onPressed: () =>
                                         Navigator.of(context).pop(),
                                   ),
@@ -474,31 +608,55 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(height: 16),
 
                     // Replace slider with a more intuitive portion selector
-                    const Text(
-                      "How much did you consume?",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "How much did you consume?",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: 'Poppins'),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildPortionButton(context, 0.25, "¼"),
-                        _buildPortionButton(context, 0.5, "½"),
-                        _buildPortionButton(context, 0.75, "¾"),
-                        _buildPortionButton(context, 1.0, "1"),
-                        _buildCustomPortionButton(context),
+                        PortionButton(
+                          context: context,
+                          portion: 0.25,
+                          label: "¼",
+                          logic: _logic,
+                          setState: setState,
+                        ),
+                        PortionButton(
+                          context: context,
+                          portion: 0.5,
+                          label: "½",
+                          logic: _logic,
+                          setState: setState,
+                        ),
+                        PortionButton(
+                          context: context,
+                          portion: 0.75,
+                          label: "¾",
+                          logic: _logic,
+                          setState: setState,
+                        ),
+                        PortionButton(
+                          context: context,
+                          portion: 1.0,
+                          label: "1",
+                          logic: _logic,
+                          setState: setState,
+                        ),
+                        CustomPortionButton(
+                          logic: _logic,
+                          setState: setState,
+                        ),
                       ],
                     ),
-                    // Show selected amount
-                    if (_logic.sliderValue > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Text(
-                          "Selected: ${_logic.sliderValue.toStringAsFixed(2)} g",
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 14),
-                        ),
-                      ),
+                    const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
                         return ElevatedButton(
@@ -538,20 +696,32 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             );
                           },
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Column(
                             children: [
-                              Icon(
-                                Icons.add_circle_outline,
-                                size: 20,
-                                color: Colors.white,
+                              const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Add to today's intake", // New, more concise title
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 8),
                               Text(
-                                "Add to today's intake", // New, more concise title
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                "${_logic.sliderValue.toStringAsFixed(0)} grams, ${(_logic.getCalories() * (_logic.sliderValue / _logic.getServingSize())).toStringAsFixed(0)} calories",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
@@ -601,7 +771,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          "Serving Size: ${_logic.sliderValue.toStringAsFixed(2)} g",
+                          "Serving Size: ${_logic.getServingSize().round()} g",
                           style: const TextStyle(
                               color: Colors.white, fontSize: 16),
                         ),
@@ -649,7 +819,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class DailyIntakePage extends StatefulWidget {
   final Map<String, double> dailyIntake;
-  DailyIntakePage({super.key, required this.dailyIntake});
+  const DailyIntakePage({super.key, required this.dailyIntake});
 
   @override
   State<DailyIntakePage> createState() => _DailyIntakePageState();
@@ -658,17 +828,13 @@ class DailyIntakePage extends StatefulWidget {
 class _DailyIntakePageState extends State<DailyIntakePage> {
   late Map<String, double> _dailyIntake;
   DateTime _selectedDate = DateTime.now();
-  List<DateTime> _dates = [];
+  final List<DateTime> _dates = List.generate(
+      7, (index) => DateTime.now().subtract(Duration(days: 6 - index)));
+
   @override
   void initState() {
     super.initState();
     _dailyIntake = widget.dailyIntake;
-    _generateDateRange();
-  }
-
-  void _generateDateRange() {
-    _dates = List.generate(
-        7, (index) => DateTime.now().subtract(Duration(days: 6 - index)));
   }
 
   Future<void> _loadDailyIntake(DateTime date) async {
@@ -692,176 +858,362 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
 
   @override
   Widget build(BuildContext context) {
-    final Logic logic = Logic();
-    double totalCalories = _dailyIntake['Energy'] ?? 0.0;
-    final chartData = logic.getPieChartData(_dailyIntake);
-    print("Chart Data inside _buildPieChart is: $chartData");
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom + 24,
+            top: 30,
+            left: 24,
+            right: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 80,
-            ),
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _dates.length,
-                  itemBuilder: (context, index) {
-                    final date = _dates[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: GestureDetector(
-                        onTap: () => _loadDailyIntake(date),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(
-                              color: _selectedDate.year == date.year &&
-                                      _selectedDate.month == date.month &&
-                                      _selectedDate.day == date.day
-                                  ? Colors.red
-                                  : Colors
-                                      .transparent, // Red border for the selected date
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              DateFormat('dd').format(date),
-                              style: TextStyle(
-                                color: _selectedDate.year == date.year &&
-                                        _selectedDate.month == date.month &&
-                                        _selectedDate.day == date.day
-                                    ? Colors.red
-                                    : Colors.white,
-                                fontSize: _selectedDate.year == date.year &&
-                                        _selectedDate.month == date.month &&
-                                        _selectedDate.day == date.day
-                                    ? 20
-                                    : 14,
-                                fontWeight: _selectedDate.year == date.year &&
-                                        _selectedDate.month == date.month &&
-                                        _selectedDate.day == date.day
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-            ),
-            Text(
-              'Total Calories: ${totalCalories.toStringAsFixed(2)} / 2000',
-              style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: LinearPercentIndicator(
-                percent: totalCalories / 2000,
-                lineHeight: 14.0,
-                progressColor: Colors.blueAccent,
-              ),
-            ),
-            const Text(
-              "Nutrient Intake",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16.0),
-            ..._buildNutrientProgress(_dailyIntake),
-            const SizedBox(height: 16.0),
-            _buildPieChart(chartData),
-            if (logic.getInsights(_dailyIntake) != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Text(
-                  logic.getInsights(_dailyIntake)!,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            const SizedBox(height: 16.0),
+            const SizedBox(height: 80),
+            _buildDateSelector(),
+            const SizedBox(height: 24),
+            _buildCalorieProgress(),
+            const SizedBox(height: 24),
+            _buildNutrientsList(),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildNutrientProgress(Map<String, double> dailyIntake) {
-    List<Widget> nutrientWidgets = [];
-
-    for (var nutrient in nutrientData) {
-      String nutrientName = nutrient['Nutrient'];
-      if (dailyIntake.containsKey(nutrientName)) {
-        double currentIntake = dailyIntake[nutrientName]!;
-        try {
-          double dvValue = double.parse(nutrient['Current Daily Value']
-              .replaceAll(RegExp(r'[^0-9\.]'), ''));
-          double percent = currentIntake / dvValue;
-          nutrientWidgets.add(Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$nutrientName: ${currentIntake.toStringAsFixed(2)} / ${nutrient['Current Daily Value']}',
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: LinearPercentIndicator(
-                  percent: percent > 1.0 ? 1.0 : percent,
-                  lineHeight: 12.0,
-                  progressColor: percent > 1.0
-                      ? Colors.red
-                      : percent > 0.7
-                          ? Colors.amber
-                          : Colors.greenAccent,
-                ),
-              ),
-            ],
-          ));
-        } catch (e) {
-          print("Error parsing double: $e");
-        }
-      }
-    }
-
-    return nutrientWidgets;
+  Widget _buildDateSelector() {
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _dates.length,
+        itemBuilder: (context, index) {
+          final date = _dates[index];
+          final isSelected = _selectedDate.day == date.day;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _DateButton(
+              date: date,
+              isSelected: isSelected,
+              onTap: () => _loadDailyIntake(date),
+            ),
+          );
+        },
+      ),
+    );
   }
 
-  Widget _buildPieChart(Map<String, double> chartData) {
-    print("Chart Data inside _buildPieChart is: $chartData");
-    return chartData.isNotEmpty
-        ? PieChart(
-            dataMap: chartData,
-            colorList: const [
-              Colors.greenAccent,
-              Colors.amberAccent,
-              Colors.blueAccent,
-              Colors.deepPurple,
-              Colors.red,
-              Colors.orange,
-              Colors.pink,
-              Colors.teal
+  Widget _buildCalorieProgress() {
+    final calories = _dailyIntake['Energy'] ?? 0.0;
+    final percent = calories / 2000;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF2763eb).withOpacity(0.2),
+            Colors.transparent,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFF2763eb).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Total Calories',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                calories.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              const Text(
+                ' / 2000 kcal',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white60,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              Expanded(child: Container()),
+              if (percent > 0.1)
+                Text(
+                  '${(percent * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: _getColorForPercent(percent),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
             ],
-            chartValuesOptions:
-                const ChartValuesOptions(showChartValuesInPercentage: true),
-          )
-        : const Text(
-            "No Data to display Pie Chart",
-            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LinearProgressIndicator(
+              value: percent > 1.0 ? 1.0 : percent,
+              minHeight: 12,
+              backgroundColor: Colors.white.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _getColorForPercent(percent),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutrientsList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Nutrient Intake',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: -0.5,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        const SizedBox(height: 24),
+        ...nutrientData.where((nutrient) {
+          final name = nutrient['Nutrient'];
+          final current = _dailyIntake[name] ?? 0.0;
+          return current > 0.0;
+        }).map((nutrient) {
+          final name = nutrient['Nutrient'];
+          final current = _dailyIntake[name] ?? 0.0;
+          final total = double.tryParse(nutrient['Current Daily Value']
+                  .replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+              0.0;
+          final percent = current / total;
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    Text(
+                      '${(percent * 100).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        color: _getColorForPercent(percent),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: percent > 1.0 ? 1.0 : percent,
+                          minHeight: 8,
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getColorForPercent(percent),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      '${current.toStringAsFixed(1)}/${total.toStringAsFixed(1)}${_getUnit(name)}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           );
+        }).toList(),
+      ],
+    );
+  }
+
+  String _getUnit(String nutrient) {
+    switch (nutrient.toLowerCase()) {
+      case 'energy':
+        return ' kcal';
+      case 'protein':
+      case 'carbohydrate':
+      case 'fat':
+      case 'fiber':
+      case 'sugar':
+        return 'g';
+      case 'sodium':
+      case 'potassium':
+      case 'calcium':
+      case 'iron':
+        return 'mg';
+      default:
+        return '';
+    }
+  }
+
+  Color _getColorForPercent(double percent) {
+    if (percent > 1.0) return Colors.red;
+    if (percent > 0.8) return Colors.orange;
+    if (percent > 0.6) return Colors.yellow;
+    return Colors.greenAccent;
+  }
+}
+
+class _DateButton extends StatelessWidget {
+  final DateTime date;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _DateButton({
+    required this.date,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 45,
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF2763eb) : Colors.white10,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            '${date.day}',
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white70,
+              fontSize: isSelected ? 20 : 16,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NutrientProgressBar extends StatelessWidget {
+  final String name;
+  final double current;
+  final double total;
+  final double percent;
+
+  const _NutrientProgressBar({
+    required this.name,
+    required this.current,
+    required this.total,
+    required this.percent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$name: ${current.toStringAsFixed(2)} / $total ${_getUnit(name)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: percent > 1.0 ? 1.0 : percent,
+              minHeight: 8,
+              backgroundColor: Colors.white12,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                percent > 1.0
+                    ? Colors.red
+                    : percent > 0.7
+                        ? Colors.amber
+                        : Colors.greenAccent,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getUnit(String nutrient) {
+    switch (nutrient.toLowerCase()) {
+      case 'energy':
+        return 'kcal';
+      case 'protein':
+      case 'carbohydrate':
+      case 'fat':
+      case 'fiber':
+      case 'sugar':
+        return 'g';
+      case 'sodium':
+      case 'potassium':
+      case 'calcium':
+      case 'iron':
+        return 'mg';
+      default:
+        return '';
+    }
   }
 }

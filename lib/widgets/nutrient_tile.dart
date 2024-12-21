@@ -130,8 +130,9 @@ class _NutrientTileState extends State<NutrientTile> {
                                     widget.nutrient,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w600,
+                                      fontFamily: 'Poppins',
                                     ),
                                   ),
                                   Text(
@@ -139,6 +140,7 @@ class _NutrientTileState extends State<NutrientTile> {
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 12,
+                                      fontFamily: 'Poppins',
                                     ),
                                   ),
                                 ],
@@ -158,6 +160,7 @@ class _NutrientTileState extends State<NutrientTile> {
                                   fontSize: 13,
                                   color: Colors.white.withOpacity(0.8),
                                   height: 1.5,
+                                  fontFamily: 'Poppins',
                                 ),
                               ),
                             ),

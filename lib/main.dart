@@ -11,7 +11,8 @@ Future<void> main() async {
     systemNavigationBarColor: Colors.transparent,
     statusBarColor: Colors.transparent,
   ));
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+      overlays: [SystemUiOverlay.top]);
   if (kIsWeb) {
     dotenv.testLoad(fileInput: 'GEMINI_API_KEY=your_api_key');
   } else {
@@ -27,7 +28,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Poppins',

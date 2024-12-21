@@ -189,9 +189,10 @@ Strictly follow the rules below for generating the response:
         try {
           double dvValue = double.parse(nutrient['Current Daily Value']
               .replaceAll(RegExp(r'[^0-9\.]'), ''));
-          double percent = dailyIntake[nutrientName]! / dvValue;
+          double percent = (dailyIntake[nutrientName]! / dvValue) * 100;
           if (percent > 0.0) {
-            chartData[nutrientName] = percent > 1.0 ? 1.0 : percent;
+            // Cap at 100% for visualization purposes
+            chartData[nutrientName] = percent > 100.0 ? 100.0 : percent;
           }
         } catch (e) {
           print("Error in parsing to double in pie chart builder: $e");
@@ -227,5 +228,17 @@ Strictly follow the rules below for generating the response:
     if (_mySetState != null) {
       _mySetState!(() {});
     }
+  }
+
+  double getCalories() {
+    var energyNutrient = parsedNutrients.firstWhere(
+      (nutrient) => nutrient['name'] == 'Energy',
+      orElse: () => {'quantity': '0.0'},
+    );
+    // Parse the quantity string to remove any non-numeric characters except decimal points
+    var quantity = energyNutrient['quantity']
+        .toString()
+        .replaceAll(RegExp(r'[^0-9\.]'), '');
+    return double.tryParse(quantity) ?? 0.0;
   }
 }
