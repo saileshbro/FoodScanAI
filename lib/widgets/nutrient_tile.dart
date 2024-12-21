@@ -130,7 +130,7 @@ class _NutrientTileState extends State<NutrientTile>
         curve: Curves.fastOutSlowIn,
         width: _isExpanded ? MediaQuery.of(context).size.width - 32 : null,
         constraints: BoxConstraints(
-          maxWidth: _isExpanded ? double.infinity : 190,
+          maxWidth: _isExpanded ? double.infinity : 170,
           minWidth: 140,
           minHeight: 70, // Add minimum height
           maxHeight: _isExpanded ? 300 : 70,
@@ -140,10 +140,10 @@ class _NutrientTileState extends State<NutrientTile>
           borderRadius: BorderRadius.circular(16.0),
           border: Border.all(
             color: widget.healthSign == "Good"
-                ? const Color(0xFF4CAF50).withOpacity(0.3)
+                ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
                 : widget.healthSign == "Bad"
-                    ? const Color(0xFFFF5252).withOpacity(0.3)
-                    : const Color(0xFFFFC107).withOpacity(0.3),
+                    ? const Color(0xFFFF5252).withValues(alpha: 0.3)
+                    : const Color(0xFFFFC107).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -158,7 +158,8 @@ class _NutrientTileState extends State<NutrientTile>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,

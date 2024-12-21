@@ -464,20 +464,18 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
                         children: _logic
                             .getGoodNutrients()
-                            .map((nutrient) => Padding(
-                                  padding: const EdgeInsets.only(right: 12.0),
-                                  child: NutrientTile(
-                                    nutrient: nutrient['name'],
-                                    healthSign: nutrient['health_sign'],
-                                    quantity: nutrient['quantity'],
-                                    insight: nutrientInsights[nutrient['name']],
-                                  ),
+                            .map((nutrient) => NutrientTile(
+                                  nutrient: nutrient['name'],
+                                  healthSign: nutrient['health_sign'],
+                                  quantity: nutrient['quantity'],
+                                  insight: nutrientInsights[nutrient['name']],
                                 ))
                             .toList(),
                       ),
@@ -519,20 +517,18 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
                         children: _logic
                             .getBadNutrients()
-                            .map((nutrient) => Padding(
-                                  padding: const EdgeInsets.only(right: 12.0),
-                                  child: NutrientTile(
-                                    nutrient: nutrient['name'],
-                                    healthSign: nutrient['health_sign'],
-                                    quantity: nutrient['quantity'],
-                                    insight: nutrientInsights[nutrient['name']],
-                                  ),
+                            .map((nutrient) => NutrientTile(
+                                  nutrient: nutrient['name'],
+                                  healthSign: nutrient['health_sign'],
+                                  quantity: nutrient['quantity'],
+                                  insight: nutrientInsights[nutrient['name']],
                                 ))
                             .toList(),
                       ),
