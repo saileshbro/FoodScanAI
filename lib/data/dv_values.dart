@@ -5,6 +5,7 @@ List<Map<String, dynamic>> nutrientData = [
     'Current Daily Value': '50g',
     'Goal': 'Less than'
   },
+  {'Nutrient': 'Sugar', 'Current Daily Value': '50g', 'Goal': 'Less than'},
   {'Nutrient': 'Biotin', 'Current Daily Value': '30mcg', 'Goal': 'At least'},
   {'Nutrient': 'Calcium', 'Current Daily Value': '1300mg', 'Goal': 'At least'},
   {'Nutrient': 'Chloride', 'Current Daily Value': '2300mg', 'Goal': 'At least'},
@@ -71,6 +72,11 @@ List<Map<String, dynamic>> nutrientData = [
   {
     'Nutrient': 'Vitamin B6',
     'Current Daily Value': '1.7mg',
+    'Goal': 'At least'
+  },
+  {
+    'Nutrient': 'Vitamin B9',
+    'Current Daily Value': '400mcg',
     'Goal': 'At least'
   },
   {

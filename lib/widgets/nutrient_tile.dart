@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:read_the_label/data/dv_values.dart';
 
-class NutrientGrid extends StatelessWidget {
+class NutrientGrid extends StatefulWidget {
   final List<NutrientData> nutrients;
 
   const NutrientGrid({
@@ -9,11 +10,16 @@ class NutrientGrid extends StatelessWidget {
   });
 
   @override
+  State<NutrientGrid> createState() => _NutrientGridState();
+}
+
+class _NutrientGridState extends State<NutrientGrid> {
+  @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 8.0,
       runSpacing: 8.0,
-      children: nutrients
+      children: widget.nutrients
           .map((nutrient) => NutrientTile(
                 nutrient: nutrient.name,
                 healthSign: nutrient.healthSign,
@@ -39,12 +45,55 @@ class NutrientTile extends StatefulWidget {
     this.insight,
   });
 
+  String _calculateDV() {
+    // Find the DV value from nutrientData
+    final nutrientInfo = nutrientData.firstWhere(
+      (n) => n['Nutrient'] == nutrient,
+      orElse: () => {'Current Daily Value': 'NA'},
+    );
+
+    if (nutrientInfo['Current Daily Value'] == 'NA') {
+      return '';
+    }
+
+    try {
+      // Extract numeric values
+      double dvValue = double.parse(nutrientInfo['Current Daily Value']
+          .replaceAll(RegExp(r'[^0-9\.]'), ''));
+      double currentValue =
+          double.parse(quantity.replaceAll(RegExp(r'[^0-9\.]'), ''));
+
+      // Calculate percentage
+      double percentage = (currentValue / dvValue) * 100;
+      return '| ${percentage.toStringAsFixed(1)}% DV';
+    } catch (e) {
+      return '';
+    }
+  }
+
   @override
   State<NutrientTile> createState() => _NutrientTileState();
 }
 
-class _NutrientTileState extends State<NutrientTile> {
+class _NutrientTileState extends State<NutrientTile>
+    with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +118,11 @@ class _NutrientTileState extends State<NutrientTile> {
       onTap: () {
         setState(() {
           _isExpanded = !_isExpanded;
+          if (_isExpanded) {
+            _animationController.forward();
+          } else {
+            _animationController.reverse();
+          }
         });
       },
       child: AnimatedContainer(
@@ -76,7 +130,7 @@ class _NutrientTileState extends State<NutrientTile> {
         curve: Curves.fastOutSlowIn,
         width: _isExpanded ? MediaQuery.of(context).size.width - 32 : null,
         constraints: BoxConstraints(
-          maxWidth: _isExpanded ? double.infinity : 160,
+          maxWidth: _isExpanded ? double.infinity : 190,
           minWidth: 140,
           minHeight: 70, // Add minimum height
           maxHeight: _isExpanded ? 300 : 70,
@@ -126,22 +180,56 @@ class _NutrientTileState extends State<NutrientTile> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    widget.nutrient,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
-                                    ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.nutrient,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Container(),
+                                      ),
+                                      RotationTransition(
+                                        turns: Tween(begin: 0.0, end: 0.5)
+                                            .animate(_animationController),
+                                        child: const Icon(
+                                          Icons.keyboard_arrow_down,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    widget.quantity,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 12,
-                                      fontFamily: 'Poppins',
-                                    ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.quantity,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 12,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        widget._calculateDV(),
+                                        style: TextStyle(
+                                          color: widget.healthSign == "Good"
+                                              ? const Color(0xFF4CAF50)
+                                              : widget.healthSign == "Bad"
+                                                  ? const Color(0xFFFF5252)
+                                                  : const Color(0xFFFFC107),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

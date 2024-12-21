@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:read_the_label/widgets/nutrient_balance_card.dart';
 import 'package:read_the_label/widgets/nutrient_tile.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:intl/intl.dart';
@@ -125,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text(
           "ReadTheLabel",
           style: TextStyle(
-              color: const Color(0xFF2763eb),
+              color: Color(0xFF2763eb),
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w500),
         ),
@@ -372,14 +373,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     _fetchData();
                   },
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome, size: 20, color: Colors.white),
-                      SizedBox(width: 8),
+                      const Icon(Icons.auto_awesome,
+                          size: 20, color: Colors.white),
+                      const SizedBox(width: 8),
                       Text(
-                        "Analyze",
-                        style: TextStyle(
+                        _isScanning ? "Analyzing..." : "Analyze",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Poppins',
@@ -543,6 +545,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    if (_logic.currentRecommendation != null)
+                      NutrientBalanceCard(
+                        recommendation: _logic.currentRecommendation!,
+                        currentPreference: _logic.currentDietaryPreference,
+                        onPreferenceChanged: (preference) {
+                          _logic.updateDietaryPreference(preference);
+                        },
+                      ),
                     Row(
                       children: [
                         Container(
@@ -605,7 +615,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
+                    // In your _buildHomePage method, after the nutrient tiles
 
                     // Replace slider with a more intuitive portion selector
                     const Align(
@@ -708,7 +720,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                   SizedBox(width: 8),
                                   Text(
-                                    "Add to today's intake", // New, more concise title
+                                    "Add to today's intake",
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -773,13 +785,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: Text(
                           "Serving Size: ${_logic.getServingSize().round()} g",
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: 'Poppins'),
                         ),
                       ),
                     if (_logic.getServingSize() > 0)
                       Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Builder(builder: (context) {
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Builder(
+                          builder: (context) {
                             return ElevatedButton(
                                 style: ButtonStyle(
                                     backgroundColor: WidgetStateProperty.all(
@@ -793,7 +808,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: const Text(
-                                          'Added to today\'s intake!'),
+                                          'Added to today\'s intake!',
+                                          style:
+                                              TextStyle(fontFamily: 'Poppins')),
                                       action: SnackBarAction(
                                         label: 'SHOW',
                                         onPressed: () {
@@ -805,8 +822,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   );
                                 },
-                                child: const Text("Add to today's intake"));
-                          }))
+                                child: const Text("Add to today's intake",
+                                    style: TextStyle(fontFamily: 'Poppins')));
+                          },
+                        ),
+                      ),
                   ],
                 ),
               )
@@ -829,7 +849,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
   late Map<String, double> _dailyIntake;
   DateTime _selectedDate = DateTime.now();
   final List<DateTime> _dates = List.generate(
-      7, (index) => DateTime.now().subtract(Duration(days: 6 - index)));
+      6, (index) => DateTime.now().subtract(Duration(days: 5 - index)));
 
   @override
   void initState() {
@@ -862,7 +882,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
       child: Padding(
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).padding.bottom + 24,
-            top: 30,
+            top: 24,
             left: 24,
             right: 24),
         child: Column(

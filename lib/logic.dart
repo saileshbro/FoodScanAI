@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import 'data/dv_values.dart';
+import 'data/nutrient_balance_analyzer.dart';
 
 class Logic {
   String _generatedText = "";
@@ -22,6 +23,14 @@ class Logic {
   bool _isLoading = false;
   static final navKey = GlobalKey<NavigatorState>();
   Function(void Function())? _mySetState;
+  NutrientBalanceAnalyzer _nutrientAnalyzer = NutrientBalanceAnalyzer();
+  DietaryPreference get currentDietaryPreference =>
+      _nutrientAnalyzer.dietaryPreference;
+  BalanceRecommendation? _currentRecommendation;
+  double _currentCarbs = 0.0;
+  double _currentSugar = 0.0;
+  double _currentFiber = 0.0;
+  double _currentProtein = 0.0;
 
   String _getStorageKey() {
     final now = DateTime.now();
@@ -125,13 +134,98 @@ Strictly follow the rules below for generating the response:
       goodNutrients.clear();
       badNutrients.clear();
       for (var nutrient in parsedNutrients) {
+        if (nutrient["name"] == "Carbohydrate") {
+          // Don't categorize carbs directly into good/bad
+          // Instead, look at the quality indicators
+          double carbQuality = _assessCarbQuality(
+              carbs: double.tryParse(nutrient['quantity']
+                      .replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+                  0.0,
+              fiber: _currentFiber,
+              sugar: _currentSugar,
+              protein: _currentProtein);
+
+          if (carbQuality >= 0.7) {
+            // Good balance
+            goodNutrients.add(
+                {...nutrient, "health_sign": "Good", "status": "Balanced"});
+          } else if (carbQuality <= 0.3) {
+            // Poor balance
+            badNutrients.add(
+                {...nutrient, "health_sign": "Bad", "status": "Unbalanced"});
+          } else {
+            goodNutrients.add(
+                {...nutrient, "health_sign": "Moderate", "status": "Moderate"});
+          }
+          continue; // Skip the default categorization for carbs
+        }
         if (nutrient["health_sign"] == "Good" ||
             nutrient["health_sign"] == "Moderate") {
           goodNutrients.add(nutrient);
         } else {
           badNutrients.add(nutrient);
         }
+        final quantity = double.tryParse(
+                nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+            0.0;
+
+        switch (nutrient['name']) {
+          case 'Carbohydrate':
+            _currentCarbs = quantity;
+            break;
+          case 'Sugar':
+            _currentSugar = quantity;
+            break;
+          case 'Fiber':
+            _currentFiber = quantity;
+            break;
+          case 'Protein':
+            _currentProtein = quantity;
+            break;
+        }
       }
+
+      // Add nutrient balance analysis
+      double carbs = 0.0, sugar = 0.0, fiber = 0.0, protein = 0.0;
+      double sodium = 0.0;
+
+      for (var nutrient in parsedNutrients) {
+        final quantity = double.tryParse(
+                nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+            0.0;
+        if (nutrient['name'] == 'Sodium') {
+          sodium = double.tryParse(
+                  nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+              0.0;
+        }
+
+        switch (nutrient['name']) {
+          case 'Carbohydrate':
+            carbs = quantity;
+            break;
+          case 'Sugar':
+            sugar = quantity;
+            break;
+          case 'Fiber':
+            fiber = quantity;
+            break;
+          case 'Protein':
+            protein = quantity;
+            break;
+          case 'Sodium':
+            sodium = quantity;
+            break;
+        }
+      }
+
+      _currentRecommendation = _nutrientAnalyzer.analyzeAndRecommend(
+        carbs: carbs,
+        sugar: sugar,
+        fiber: fiber,
+        protein: protein,
+        servingSize: _servingSize,
+        sodium: sodium,
+      );
     } catch (e) {
       print("Error parsing JSON: $e");
       // Handle the error gracefully, maybe display a message to the user
@@ -240,5 +334,52 @@ Strictly follow the rules below for generating the response:
         .toString()
         .replaceAll(RegExp(r'[^0-9\.]'), '');
     return double.tryParse(quantity) ?? 0.0;
+  }
+
+  BalanceRecommendation? get currentRecommendation => _currentRecommendation;
+
+  void updateDietaryPreference(DietaryPreference preference) {
+    _nutrientAnalyzer = NutrientBalanceAnalyzer(dietaryPreference: preference);
+    if (_currentRecommendation != null) {
+      _currentRecommendation = _nutrientAnalyzer.analyzeAndRecommend(
+        carbs: _currentCarbs,
+        sugar: _currentSugar,
+        fiber: _currentFiber,
+        protein: _currentProtein,
+        servingSize: _servingSize,
+      );
+      if (_mySetState != null) {
+        _mySetState!(() {});
+      }
+    }
+  }
+
+  double _assessCarbQuality({
+    required double carbs,
+    required double fiber,
+    required double sugar,
+    required double protein,
+  }) {
+    if (carbs == 0) return 0.5; // Neutral if no carbs
+
+    double score = 0.0;
+
+    // Fiber to carb ratio (higher is better)
+    double fiberRatio = fiber / carbs;
+    score += (fiberRatio >= 0.1)
+        ? 0.4
+        : (fiberRatio * 4); // 10% or more fiber is ideal
+
+    // Sugar to carb ratio (lower is better)
+    double sugarRatio = sugar / carbs;
+    score += (sugarRatio <= 0.2)
+        ? 0.4
+        : (0.4 - (sugarRatio * 0.5)); // Less than 20% sugar is ideal
+
+    // Protein balance (presence of protein helps with glycemic response)
+    score +=
+        (protein >= 5) ? 0.2 : (protein / 25); // 5g or more protein is ideal
+
+    return score.clamp(0.0, 1.0); // Normalize between 0 and 1
   }
 }
