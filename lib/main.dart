@@ -12,7 +12,7 @@ Future<void> main() async {
     statusBarColor: Colors.transparent,
   ));
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-      overlays: [SystemUiOverlay.top]);
+      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
   if (kIsWeb) {
     dotenv.testLoad(fileInput: 'GEMINI_API_KEY=your_api_key');
   } else {

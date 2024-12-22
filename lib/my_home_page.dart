@@ -518,7 +518,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const SizedBox(height: 16),
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -541,14 +541,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    if (_logic.currentRecommendation != null)
-                      NutrientBalanceCard(
-                        recommendation: _logic.currentRecommendation!,
-                        currentPreference: _logic.currentDietaryPreference,
-                        onPreferenceChanged: (preference) {
-                          _logic.updateDietaryPreference(preference);
-                        },
-                      ),
                     Row(
                       children: [
                         Container(

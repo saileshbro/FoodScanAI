@@ -18,7 +18,7 @@ class _NutrientGridState extends State<NutrientGrid> {
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 8.0,
-      runSpacing: 8.0,
+      runSpacing: 20.0,
       children: widget.nutrients
           .map((nutrient) => NutrientTile(
                 nutrient: nutrient.name,
@@ -187,7 +187,7 @@ class _NutrientTileState extends State<NutrientTile>
                                         widget.nutrient,
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 13,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'Poppins',
                                         ),
@@ -212,7 +212,7 @@ class _NutrientTileState extends State<NutrientTile>
                                         widget.quantity,
                                         style: TextStyle(
                                           color: Colors.white.withOpacity(0.7),
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontFamily: 'Poppins',
                                         ),
                                       ),
@@ -225,7 +225,7 @@ class _NutrientTileState extends State<NutrientTile>
                                               : widget.healthSign == "Bad"
                                                   ? const Color(0xFFFF5252)
                                                   : const Color(0xFFFFC107),
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'Poppins',
                                         ),
