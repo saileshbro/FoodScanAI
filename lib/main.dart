@@ -32,6 +32,28 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Poppins',
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4CAF50),
+          brightness: Brightness.light,
+          surface: const Color.fromARGB(255, 217, 223, 216),
+          primary: const Color.fromARGB(255, 203, 200, 112),
+          secondary: const Color(0xFF7CB342),
+          tertiary: const Color(0xFFD7CCC8),
+          error: const Color(0xFFD32F2F),
+          onSurface: Colors.black,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onError: Colors.white,
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black),
+          titleLarge: TextStyle(color: Colors.black),
+          titleMedium: TextStyle(color: Colors.black),
+          titleSmall: TextStyle(color: Colors.black),
+          labelLarge: TextStyle(color: Colors.white),
+          labelMedium: TextStyle(color: Colors.white),
+        ),
       ),
       home: const MyHomePage(),
     );

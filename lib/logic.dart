@@ -5,24 +5,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:read_the_label/models/food_item.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pie_chart/pie_chart.dart';
 
 import 'data/dv_values.dart';
-import 'data/nutrient_balance_analyzer.dart';
 
 class Logic {
   String _generatedText = "";
-  File? _selectedFile;
+  File? _frontImage;
+  File? _nutritionLabelImage;
+  File? get frontImage => _frontImage;
+  File? get nutritionLabelImage => _nutritionLabelImage;
   List<Map<String, dynamic>> parsedNutrients = [];
   List<Map<String, dynamic>> goodNutrients = [];
   List<Map<String, dynamic>> badNutrients = [];
+  File? foodImage;
+  List<FoodItem> analyzedFoodItems = [];
+  Map<String, dynamic> totalPlateNutrients = {};
   double _servingSize = 0.0;
   double sliderValue = 0.0;
   Map<String, double> dailyIntake = {};
   bool _isLoading = false;
   static final navKey = GlobalKey<NavigatorState>();
   Function(void Function())? _mySetState;
+  String _productName = "";
+  String get productName => _productName;
+  Map<String, dynamic> _nutritionAnalysis = {};
+  Map<String, dynamic> get nutritionAnalysis => _nutritionAnalysis;
 
   String _getStorageKey() {
     final now = DateTime.now();
@@ -45,122 +54,42 @@ class Logic {
     await prefs.setString(storageKey, jsonEncode(dailyIntake));
   }
 
-  Future<String> fetchGeneratedText(
-      {required File? selectedFile,
-      required Function(void Function()) setState}) async {
-    _isLoading = true;
-    setState(() {});
-    print("_fetchGeneratedText() is called");
-    // Access your API key (assuming you have a way to access it)
-    final apiKey = kIsWeb
-        ? const String.fromEnvironment('GEMINI_API_KEY')
-        : dotenv.env['GEMINI_API_KEY'];
-
-    // Initialize the GenerativeModel
-    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
-    final imageBytes = await selectedFile!.readAsBytes();
-    print("model selection is a success");
-    final imageParts = [
-      DataPart('image/jpeg', imageBytes),
-    ];
-
-    final prompt = TextPart(
-        """Analyze the label, considering the attached daily value recommendations data.  Provide your response in a strictly valid JSON format with this structure:
-{
-  "serving_size": "Serving size with unit or 'NA' if not found",
-  "nutrients": [
-    {"name": "Nutrient Name", "status": "High" or "Low" or "Moderate", "quantity": "Quantity", "health_sign": "Good" or "Bad" or "Moderate"}
-  ]
-}
-
-Strictly follow the rules below for generating the response:
-1. Mention Quantity with units in the label
-2. Do not include any extra characters or formatting outside of the JSON object. 
-3. Use accurate escape sequences for any special characters. 
-4. Avoid including other such nutrients from the attached daily value recommendations data that aren't mentioned in the label.
-5. Use %DV to determine if a serving of the food is high or low in an individual nutrient. As a general guide:
-  5% DV or less of a nutrient per serving is considered low.
-  20% DV or more of a nutrient per serving is considered high.
-  5% < DV < 20% of a nutrient per serving is considered moderate
-6. Use the following rule to determine the health_sign of the nutrient:
-    If the goal is "At least", then:
-    if status is "High", then health_sign should be "Good",
-    if status is "Moderate", then health_sign should be "Moderate",
-    if status is "Low", then health_sign should be "Bad",
-    If the goal is "Less than", then:
-    if status is "Low", then health_sign should be "Good",
-    if status is "Moderate", then health_sign should be "Moderate",
-    if status is "High", then health_sign should be "Bad"
-    If the goal is "Equal to", then:
-    if status is "Low", then health_sign should be "Bad",
-    if status is "Moderate", then health_sign should be "Good",
-    if status is "High", then health_sign should be "Moderate"
- """);
-
-    final nutrientParts = nutrientData
-        .map((nutrient) => TextPart(
-            "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']} (${nutrient['Goal']})"))
-        .toList();
-
-    final response = await model.generateContent([
-      Content.multi([prompt, ...nutrientParts, ...imageParts])
-    ]);
-    _generatedText = response.text!;
-
-    try {
-      final jsonString = _generatedText.substring(
-          _generatedText.indexOf('{'), _generatedText.lastIndexOf('}') + 1);
-      final jsonResponse = jsonDecode(jsonString);
-      if (jsonResponse.containsKey("serving_size") &&
-          jsonResponse["serving_size"] != null) {
-        _servingSize = jsonResponse["serving_size"] == "NA"
-            ? 0.0
-            : double.parse(jsonResponse["serving_size"]
-                .replaceAll(RegExp(r'[^0-9\.]'), ''));
-      } else {
-        _servingSize = 0.0;
-      }
-      parsedNutrients =
-          (jsonResponse['nutrients'] as List).cast<Map<String, dynamic>>();
-      //clear the good/bad nutrients before adding to avoid duplicates
-      goodNutrients.clear();
-      badNutrients.clear();
+  void addToDailyIntake(BuildContext context, Function(int) updateIndex) {
+    if (parsedNutrients.isNotEmpty) {
       for (var nutrient in parsedNutrients) {
-        if (nutrient["health_sign"] == "Good" ||
-            nutrient["health_sign"] == "Moderate") {
-          goodNutrients.add(nutrient);
+        final name = nutrient['name'];
+        final quantity = double.tryParse(
+                nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+            0;
+        double adjustedQuantity = quantity * (sliderValue / _servingSize);
+
+        if (dailyIntake.containsKey(name)) {
+          dailyIntake[name] = dailyIntake[name]! + adjustedQuantity;
         } else {
-          badNutrients.add(nutrient);
+          dailyIntake[name] = adjustedQuantity;
         }
       }
-    } catch (e) {
-      print("Error parsing JSON: $e");
-      // Handle the error gracefully, maybe display a message to the user
-    }
-    print(parsedNutrients);
-    _generatedText = response.text!;
-    print("This is response content: ${response.text}");
-    print("This is updated generatedText: $_generatedText");
-    // Return the generated text
-    _isLoading = false;
-    setState(() {});
-    return _generatedText;
-  }
-
-  void addToDailyIntake(BuildContext context, Function(int) updateIndex) {
-    if (parsedNutrients.isEmpty) return;
-    for (var nutrient in parsedNutrients) {
-      final name = nutrient['name'];
-      final quantity = double.tryParse(
-              nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
-          0;
-      double adjustedQuantity = quantity * (sliderValue / _servingSize);
-
-      if (dailyIntake.containsKey(name)) {
-        dailyIntake[name] = dailyIntake[name]! + adjustedQuantity;
-      } else {
-        dailyIntake[name] = adjustedQuantity;
+    } else if (totalPlateNutrients.isNotEmpty) {
+      // Add Energy/Calories
+      if (totalPlateNutrients['calories'] != null) {
+        dailyIntake['Energy'] =
+            (dailyIntake['Energy'] ?? 0.0) + totalPlateNutrients['calories'];
       }
+
+      // Add other nutrients
+      final nutrientMappings = {
+        'protein': 'Protein',
+        'carbohydrates': 'Carbohydrate',
+        'fat': 'Total Fat',
+        'fiber': 'Dietary Fiber'
+      };
+
+      nutrientMappings.forEach((key, formalName) {
+        if (totalPlateNutrients[key] != null) {
+          dailyIntake[formalName] =
+              (dailyIntake[formalName] ?? 0.0) + totalPlateNutrients[key];
+        }
+      });
     }
     saveDailyIntake();
   }
@@ -242,4 +171,286 @@ Strictly follow the rules below for generating the response:
         .replaceAll(RegExp(r'[^0-9\.]'), '');
     return double.tryParse(quantity) ?? 0.0;
   }
+
+  Future<String> analyzeImages(
+      {required Function(void Function()) setState}) async {
+    _isLoading = true;
+    setState(() {});
+
+    final apiKey = kIsWeb
+        ? const String.fromEnvironment('GEMINI_API_KEY')
+        : dotenv.env['GEMINI_API_KEY'];
+
+    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
+
+    final frontImageBytes = await _frontImage!.readAsBytes();
+    final labelImageBytes = await _nutritionLabelImage!.readAsBytes();
+
+    final imageParts = [
+      DataPart('image/jpeg', frontImageBytes),
+      DataPart('image/jpeg', labelImageBytes),
+    ];
+
+    final nutrientParts = nutrientData
+        .map((nutrient) => TextPart(
+            "${nutrient['Nutrient']}: ${nutrient['Current Daily Value']}"))
+        .toList();
+    final prompt = TextPart(
+        """Analyze the food product, product name and its nutrition label. Provide response in this strict JSON format:
+{
+  "product": {
+    "name": "Product name from front image",
+    "category": "Food category (e.g., snack, beverage, etc.)"
+  },
+  "nutrition_analysis": {
+    "serving_size": "Serving size with unit",
+    "nutrients": [
+      {
+        "name": "Nutrient name",
+        "quantity": "Quantity with unit",
+        "daily_value": "Percentage of daily value",
+        "status": "High/Moderate/Low based on DV%",
+        "health_impact": "Good/Bad/Moderate"
+      }
+    ],
+    "primary_concerns": [
+      {
+        "issue": "Primary nutritional concern",
+        "explanation": "Brief explanation of health impact",
+        "recommendations": [
+          {
+            "food": "Complementary food suitable to add to this product, consider product name for determining suitability for complementary food additions",
+            "quantity": "Recommended quantity to add",
+            "reasoning": "How this addition helps balance the nutrition (e.g., slows sugar absorption, adds fiber, reduces glycemic index)"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+Strictly follow these rules:
+1. Mention Quantity with units in the label
+2. Do not include any extra characters or formatting outside of the JSON object
+3. Use accurate escape sequences for any special characters
+4. Avoid including nutrients that aren't mentioned in the label
+5. For primary_concerns, focus on major nutritional imbalances
+6. For recommendations:
+   - Suggest foods that can be added to or consumed with the product to improve its nutritional balance
+   - Focus on practical additions that complement the main product
+   - Explain how each addition helps balance the nutrition (e.g., adding fiber to slow sugar absorption)
+   - Consider cultural context and common food pairings
+   - Provide specific quantities for the recommended additions
+7. Use %DV to determine if a serving is high or low in an individual nutrient:
+   5% DV or less is considered low
+   20% DV or more is considered high
+   5% < DV < 20% is considered moderate
+8. For health_impact determination:
+   For "At least" nutrients (like fiber, protein):
+     High status → Good health_impact
+     Moderate status → Moderate health_impact
+     Low status → Bad health_impact
+   For "Less than" nutrients (like sodium, saturated fat):
+     Low status → Good health_impact
+     Moderate status → Moderate health_impact
+     High status → Bad health_impact
+""");
+
+    final response = await model.generateContent([
+      Content.multi([prompt, ...nutrientParts, ...imageParts])
+    ]);
+
+    _generatedText = response.text!;
+    print("This is response content: $_generatedText");
+    try {
+      final jsonString = _generatedText.substring(
+          _generatedText.indexOf('{'), _generatedText.lastIndexOf('}') + 1);
+      final jsonResponse = jsonDecode(jsonString);
+
+      _productName = jsonResponse['product']['name'];
+      _nutritionAnalysis = jsonResponse['nutrition_analysis'];
+
+      if (_nutritionAnalysis.containsKey("serving_size")) {
+        _servingSize = double.tryParse(_nutritionAnalysis["serving_size"]
+                .replaceAll(RegExp(r'[^0-9\.]'), '')) ??
+            0.0;
+      }
+
+      parsedNutrients = (_nutritionAnalysis['nutrients'] as List)
+          .cast<Map<String, dynamic>>();
+
+      // Clear and update good/bad nutrients
+      goodNutrients.clear();
+      badNutrients.clear();
+      for (var nutrient in parsedNutrients) {
+        if (nutrient["health_impact"] == "Good" ||
+            nutrient["health_impact"] == "Moderate") {
+          goodNutrients.add(nutrient);
+        } else {
+          badNutrients.add(nutrient);
+        }
+      }
+    } catch (e) {
+      print("Error parsing JSON: $e");
+    }
+
+    _isLoading = false;
+    setState(() {});
+    return _generatedText;
+  }
+
+  Future<String> analyzeFoodImage({
+    required File imageFile,
+    required Function(void Function()) setState,
+  }) async {
+    _isLoading = true;
+    setState(() {});
+
+    final apiKey = kIsWeb
+        ? const String.fromEnvironment('GEMINI_API_KEY')
+        : dotenv.env['GEMINI_API_KEY'];
+
+    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
+
+    final imageBytes = await imageFile.readAsBytes();
+
+    final prompt = TextPart(
+        """Analyze this food image and break down each visible food item. 
+Provide response in this strict JSON format:
+{
+  "plate_analysis": {
+    "items": [
+      {
+        "food_name": "Name of the food item",
+        "estimated_quantity": {
+          "amount": 0,
+          "unit": "g",
+        },
+        "nutrients_per_100g": {
+          "calories": 0,
+          "protein": {"value": 0, "unit": "g"},
+          "carbohydrates": {"value": 0, "unit": "g"},
+          "fat": {"value": 0, "unit": "g"},
+          "fiber": {"value": 0, "unit": "g"}
+        },
+        "total_nutrients": {
+          "calories": 0,
+          "protein": {"value": 0, "unit": "g"},
+          "carbohydrates": {"value": 0, "unit": "g"},
+          "fat": {"value": 0, "unit": "g"},
+          "fiber": {"value": 0, "unit": "g"}
+        },
+        "visual_cues": ["List of visual indicators used for estimation"],
+        "position": "Description of item location in the image"
+      }
+    ],
+    "total_plate_nutrients": {
+      "calories": 0,
+      "protein": {"value": 0, "unit": "g"},
+      "carbohydrates": {"value": 0, "unit": "g"},
+      "fat": {"value": 0, "unit": "g"},
+      "fiber": {"value": 0, "unit": "g"}
+    }
+  }
+}
+
+Consider:
+1. Use visual cues to estimate portions (size relative to plate, height of food, etc.)
+2. Provide nutrients both per 100g and for estimated total quantity
+3. Consider common serving sizes and preparation methods
+""");
+
+    try {
+      final response = await model.generateContent([
+        Content.multi([prompt, DataPart('image/jpeg', imageBytes)])
+      ]);
+
+      if (response.text != null) {
+        try {
+          // Extract JSON from response
+          final jsonString = response.text!.substring(
+            response.text!.indexOf('{'),
+            response.text!.lastIndexOf('}') + 1,
+          );
+          final jsonResponse = jsonDecode(jsonString);
+          final plateAnalysis = jsonResponse['plate_analysis'];
+
+          // Clear previous analysis
+          analyzedFoodItems.clear();
+
+          // Process each food item
+          if (plateAnalysis['items'] != null) {
+            for (var item in plateAnalysis['items']) {
+              analyzedFoodItems.add(FoodItem(
+                name: item['food_name'],
+                quantity: item['estimated_quantity']['amount'].toDouble(),
+                unit: item['estimated_quantity']['unit'],
+                nutrientsPer100g: {
+                  'calories': item['nutrients_per_100g']['calories'],
+                  'protein': item['nutrients_per_100g']['protein']['value'],
+                  'carbohydrates': item['nutrients_per_100g']['carbohydrates']
+                      ['value'],
+                  'fat': item['nutrients_per_100g']['fat']['value'],
+                  'fiber': item['nutrients_per_100g']['fiber']['value'],
+                },
+              ));
+            }
+          }
+
+          // Store total nutrients
+          totalPlateNutrients = {
+            'calories': plateAnalysis['total_plate_nutrients']['calories'],
+            'protein': plateAnalysis['total_plate_nutrients']['protein']
+                ['value'],
+            'carbohydrates': plateAnalysis['total_plate_nutrients']
+                ['carbohydrates']['value'],
+            'fat': plateAnalysis['total_plate_nutrients']['fat']['value'],
+            'fiber': plateAnalysis['total_plate_nutrients']['fiber']['value'],
+          };
+
+          setState(() {
+            _isLoading = false;
+          });
+
+          return response.text!;
+        } catch (e) {
+          print("Error parsing JSON response: $e");
+          setState(() {
+            _isLoading = false;
+          });
+          return "Error parsing response";
+        }
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      return "No response received";
+    } catch (e) {
+      print("Error analyzing food image: $e");
+      setState(() {
+        _isLoading = false;
+      });
+      return "Error analyzing image";
+    }
+  }
+
+  Future<void> captureImage({
+    required ImageSource source,
+    required bool isFrontImage,
+    required Function(void Function()) setState,
+  }) async {
+    final imagePicker = ImagePicker();
+    final image = await imagePicker.pickImage(source: source);
+
+    if (image != null) {
+      if (isFrontImage) {
+        _frontImage = File(image.path);
+      } else {
+        _nutritionLabelImage = File(image.path);
+      }
+      setState(() {});
+    }
+  }
+
+  bool canAnalyze() => _frontImage != null && _nutritionLabelImage != null;
 }

@@ -22,8 +22,9 @@ class PortionButton extends StatelessWidget {
     bool isSelected = (logic.sliderValue / logic.getServingSize()) == portion;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            isSelected ? const Color(0xff2563eb) : const Color(0xff1f2937),
+        backgroundColor: isSelected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.tertiary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -33,7 +34,9 @@ class PortionButton extends StatelessWidget {
         });
       },
       child: Text(label,
-          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins')),
+          style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium!.color,
+              fontFamily: 'Poppins')),
     );
   }
 }
@@ -52,7 +55,7 @@ class CustomPortionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xff1f2937),
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -60,16 +63,22 @@ class CustomPortionButton extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xff1f2937),
-            title: const Text('Enter Custom Amount',
-                style: TextStyle(color: Colors.white, fontFamily: 'Poppins')),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            title: Text('Enter Custom Amount',
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium!.color,
+                    fontFamily: 'Poppins')),
             content: TextField(
               keyboardType: TextInputType.number,
-              style:
-                  const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium!.color,
+                fontFamily: 'Poppins',
+              ),
+              decoration: InputDecoration(
                 hintText: 'Enter amount in grams',
-                hintStyle: TextStyle(color: Colors.white54),
+                hintStyle: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium!.color,
+                ),
               ),
               onChanged: (value) {
                 logic.updateSliderValue(
@@ -78,17 +87,20 @@ class CustomPortionButton extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                child: const Text('OK',
-                    style:
-                        TextStyle(color: Colors.white, fontFamily: 'Poppins')),
+                child: Text('OK',
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium!.color,
+                        fontFamily: 'Poppins')),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
         );
       },
-      child: const Text("Custom",
-          style: TextStyle(color: Colors.white, fontFamily: 'Poppins')),
+      child: Text("Custom",
+          style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium!.color,
+              fontFamily: 'Poppins')),
     );
   }
 }
