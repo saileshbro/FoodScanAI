@@ -453,4 +453,30 @@ Consider:
   }
 
   bool canAnalyze() => _frontImage != null && _nutritionLabelImage != null;
+
+  void updateTotalNutrients() {
+    totalPlateNutrients = {
+      'calories': 0.0,
+      'protein': 0.0,
+      'carbohydrates': 0.0,
+      'fat': 0.0,
+      'fiber': 0.0,
+    };
+
+    for (var item in analyzedFoodItems) {
+      var itemNutrients = item.calculateTotalNutrients();
+      totalPlateNutrients['calories'] =
+          (totalPlateNutrients['calories'] ?? 0.0) +
+              (itemNutrients['calories'] ?? 0.0);
+      totalPlateNutrients['protein'] = (totalPlateNutrients['protein'] ?? 0.0) +
+          (itemNutrients['protein'] ?? 0.0);
+      totalPlateNutrients['carbohydrates'] =
+          (totalPlateNutrients['carbohydrates'] ?? 0.0) +
+              (itemNutrients['carbohydrates'] ?? 0.0);
+      totalPlateNutrients['fat'] =
+          (totalPlateNutrients['fat'] ?? 0.0) + (itemNutrients['fat'] ?? 0.0);
+      totalPlateNutrients['fiber'] = (totalPlateNutrients['fiber'] ?? 0.0) +
+          (itemNutrients['fiber'] ?? 0.0);
+    }
+  }
 }

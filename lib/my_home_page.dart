@@ -1188,6 +1188,7 @@ class _FoodScanPageState extends State<FoodScanPage> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with food name and quantity
@@ -1226,52 +1227,122 @@ class _FoodScanPageState extends State<FoodScanPage> {
                     ),
                   ),
                 ),
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        title: const Text('Edit quantity',
+                            style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600)),
+                        content: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'Enter quantity in ${item.unit}',
+                            labelText: 'Quantity',
+                            labelStyle: TextStyle(
+                              fontFamily: 'Poppins',
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          onChanged: (value) {
+                            double? newQuantity = double.tryParse(value);
+                            if (newQuantity != null) {
+                              setState(() {
+                                item.quantity = newQuantity;
+                                // Recalculate total nutrients if needed
+                                widget.logic.updateTotalNutrients();
+                              });
+                            }
+                          },
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(
+                              'Done',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w400,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.edit,
+                      color: Theme.of(context).colorScheme.primary, size: 20),
+                ),
               ],
             ),
           ),
           // Nutrient grid
-          Padding(
+          GridView.count(
             padding: const EdgeInsets.all(8),
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 2.5,
-              children: [
-                _buildNutrientTile(
-                  'Calories',
-                  '${item.calculateTotalNutrients()['calories']?.toStringAsFixed(1)}',
-                  'kcal',
-                  Icons.local_fire_department_outlined,
-                ),
-                _buildNutrientTile(
-                  'Protein',
-                  '${item.calculateTotalNutrients()['protein']?.toStringAsFixed(1)}',
-                  'g',
-                  Icons.fitness_center_outlined,
-                ),
-                _buildNutrientTile(
-                  'Carbs',
-                  '${item.calculateTotalNutrients()['carbohydrates']?.toStringAsFixed(1)}',
-                  'g',
-                  Icons.grain_outlined,
-                ),
-                _buildNutrientTile(
-                  'Fat',
-                  '${item.calculateTotalNutrients()['fat']?.toStringAsFixed(1)}',
-                  'g',
-                  Icons.opacity_outlined,
-                ),
-                _buildNutrientTile(
-                  'Fiber',
-                  '${item.calculateTotalNutrients()['fiber']?.toStringAsFixed(1)}',
-                  'g',
-                  Icons.grass_outlined,
-                ),
-              ],
-            ),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 2.5,
+            children: [
+              _buildNutrientTile(
+                'Calories',
+                '${item.calculateTotalNutrients()['calories']?.toStringAsFixed(1)}',
+                'kcal',
+                Icons.local_fire_department_outlined,
+              ),
+              _buildNutrientTile(
+                'Protein',
+                '${item.calculateTotalNutrients()['protein']?.toStringAsFixed(1)}',
+                'g',
+                Icons.fitness_center_outlined,
+              ),
+              _buildNutrientTile(
+                'Carbs',
+                '${item.calculateTotalNutrients()['carbohydrates']?.toStringAsFixed(1)}',
+                'g',
+                Icons.grain_outlined,
+              ),
+              _buildNutrientTile(
+                'Fat',
+                '${item.calculateTotalNutrients()['fat']?.toStringAsFixed(1)}',
+                'g',
+                Icons.opacity_outlined,
+              ),
+              _buildNutrientTile(
+                'Fiber',
+                '${item.calculateTotalNutrients()['fiber']?.toStringAsFixed(1)}',
+                'g',
+                Icons.grass_outlined,
+              ),
+            ],
           ),
         ],
       ),
