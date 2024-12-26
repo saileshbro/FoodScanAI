@@ -56,38 +56,82 @@ class Logic {
 
   void addToDailyIntake(BuildContext context, Function(int) updateIndex) {
     if (parsedNutrients.isNotEmpty) {
+      final nutrientMappings = {
+        // Basic macronutrients
+        'Energy': 'Energy',
+        'Total Fat': 'Fat',
+        'Total Sugars': 'Sugar',
+        'Protein': 'Protein',
+        'Carbohydrate': 'Carbohydrate',
+        'Dietary Fiber': 'Fiber',
+
+        // Vitamins
+        'Vitamin A': 'Vitamin A',
+        'Vitamin B6': 'Vitamin B6',
+        'Vitamin B9': 'Vitamin B9',
+        'Vitamin B12': 'Vitamin B12',
+        'Vitamin C': 'Vitamin C',
+        'Vitamin D': 'Vitamin D',
+        'Vitamin E': 'Vitamin E',
+        'Vitamin K': 'Vitamin K',
+        'Thiamin': 'Thiamin',
+        'Riboflavin': 'Riboflavin',
+        'Niacin': 'Niacin',
+        'Folate': 'Folate/Folic Acid',
+        'Pantothenic Acid': 'Pantothenic Acid',
+        'Biotin': 'Biotin',
+
+        // Minerals
+        'Calcium': 'Calcium',
+        'Iron': 'Iron',
+        'Magnesium': 'Magnesium',
+        'Phosphorus': 'Phosphorus',
+        'Zinc': 'Zinc',
+        'Copper': 'Copper',
+        'Manganese': 'Manganese',
+        'Selenium': 'Selenium',
+        'Chromium': 'Chromium',
+        'Molybdenum': 'Molybdenum',
+        'Chloride': 'Chloride',
+        'Potassium': 'Potassium',
+        'Choline': 'Choline',
+        'Sodium': 'Sodium',
+
+        // Other nutrients
+        'Cholesterol': 'Cholesterol',
+        'Iodine': 'Iodine'
+      };
       for (var nutrient in parsedNutrients) {
         final name = nutrient['name'];
+        // Map the nutrient name if a mapping exists
+        final mappedName = nutrientMappings[name] ?? name;
+
         final quantity = double.tryParse(
                 nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
             0;
         double adjustedQuantity = quantity * (sliderValue / _servingSize);
 
-        if (dailyIntake.containsKey(name)) {
-          dailyIntake[name] = dailyIntake[name]! + adjustedQuantity;
+        if (dailyIntake.containsKey(mappedName)) {
+          dailyIntake[mappedName] = dailyIntake[mappedName]! + adjustedQuantity;
         } else {
-          dailyIntake[name] = adjustedQuantity;
+          dailyIntake[mappedName] = adjustedQuantity;
         }
       }
     } else if (totalPlateNutrients.isNotEmpty) {
-      // Add Energy/Calories
-      if (totalPlateNutrients['calories'] != null) {
-        dailyIntake['Energy'] =
-            (dailyIntake['Energy'] ?? 0.0) + totalPlateNutrients['calories'];
-      }
-
-      // Add other nutrients
+      // Map the nutrient names to match the daily intake format
       final nutrientMappings = {
+        'calories': 'Energy',
         'protein': 'Protein',
-        'carbohydrates': 'Carbohydrate',
+        'carbohydrates':
+            'Carbohydrate', // Changed from 'Carbohydrates' to 'Carbohydrate'
         'fat': 'Total Fat',
-        'fiber': 'Dietary Fiber'
+        'fiber': 'Fiber'
       };
 
       nutrientMappings.forEach((key, formalName) {
         if (totalPlateNutrients[key] != null) {
           dailyIntake[formalName] =
-              (dailyIntake[formalName] ?? 0.0) + totalPlateNutrients[key];
+              (dailyIntake[formalName] ?? 0.0) + totalPlateNutrients[key]!;
         }
       });
     }
@@ -110,27 +154,6 @@ class Logic {
   }
 
   static GlobalKey<NavigatorState> getNavKey() => navKey;
-
-  Map<String, double> getPieChartData(Map<String, double> dailyIntake) {
-    Map<String, double> chartData = {};
-    for (var nutrient in nutrientData) {
-      String nutrientName = nutrient['Nutrient'].trim();
-      if (dailyIntake.containsKey(nutrientName)) {
-        try {
-          double dvValue = double.parse(nutrient['Current Daily Value']
-              .replaceAll(RegExp(r'[^0-9\.]'), ''));
-          double percent = (dailyIntake[nutrientName]! / dvValue) * 100;
-          if (percent > 0.0) {
-            // Cap at 100% for visualization purposes
-            chartData[nutrientName] = percent > 100.0 ? 100.0 : percent;
-          }
-        } catch (e) {
-          print("Error in parsing to double in pie chart builder: $e");
-        }
-      }
-    }
-    return chartData;
-  }
 
   String? getInsights(Map<String, double> dailyIntake) {
     for (var nutrient in nutrientData) {
