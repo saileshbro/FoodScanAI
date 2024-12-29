@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../logic.dart';
-import 'food_nutreint_tile.dart';
 
 class TotalNutrientsCard extends StatelessWidget {
   final Logic logic;
@@ -124,7 +123,9 @@ class TotalNutrientsCard extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: ElevatedButton.icon(
               onPressed: () {
-                logic.addToDailyIntake(context, updateIndex);
+                print("Add to Daily Intake button pressed");
+                print("Current total nutrients: ${logic.totalPlateNutrients}");
+                logic.addToDailyIntake(context, updateIndex, 'food');
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Added to daily intake'),

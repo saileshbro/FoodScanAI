@@ -9,6 +9,7 @@ import 'package:read_the_label/models/food_item.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/dv_values.dart';
+import 'models/food_consumption.dart';
 
 class Logic {
   String _generatedText = "";
@@ -32,110 +33,186 @@ class Logic {
   String get productName => _productName;
   Map<String, dynamic> _nutritionAnalysis = {};
   Map<String, dynamic> get nutritionAnalysis => _nutritionAnalysis;
+  List<FoodConsumption> _foodHistory = [];
+  List<FoodConsumption> get foodHistory => _foodHistory;
+  String _mealName = "";
+  String get mealName => _mealName;
 
-  String _getStorageKey() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return 'dailyIntake_${today.toIso8601String()}';
+  String getStorageKey(DateTime date) {
+    // Standardize the storage key format
+    return 'dailyIntake_${date.year}-${date.month}-${date.day}';
   }
 
-  Future<void> loadDailyIntake() async {
+  Future<void> debugCheckStorage() async {
     final prefs = await SharedPreferences.getInstance();
-    final String storageKey = _getStorageKey();
-    dailyIntake = (prefs.getString(storageKey) != null)
-        ? (jsonDecode(prefs.getString(storageKey)!) as Map)
-            .cast<String, double>()
-        : {};
+
+    // Get all keys
+    final keys = prefs.getKeys();
+    print("All SharedPreferences keys: $keys");
+
+    // Print food history
+    final foodHistoryData = prefs.getString('food_history');
+    print("Stored food history: $foodHistoryData");
+
+    // Print daily intakes for last 7 days
+    final now = DateTime.now();
+    for (int i = 0; i < 7; i++) {
+      final date = now.subtract(Duration(days: i));
+      final key = 'dailyIntake_${date.year}-${date.month}-${date.day}';
+      final data = prefs.getString(key);
+      print("Daily intake for ${date.toString().split(' ')[0]}: $data");
+    }
   }
 
   Future<void> saveDailyIntake() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String storageKey = _getStorageKey();
-    await prefs.setString(storageKey, jsonEncode(dailyIntake));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      final storageKey = getStorageKey(today);
+
+      // Get existing data first
+      final existingData = prefs.getString(storageKey);
+      Map<String, double> updatedIntake = {};
+
+      if (existingData != null) {
+        final decoded = jsonDecode(existingData) as Map<String, dynamic>;
+        decoded.forEach((key, value) {
+          updatedIntake[key] = (value as num).toDouble();
+        });
+      }
+
+      // Merge existing data with new data
+      dailyIntake.forEach((key, value) {
+        updatedIntake[key] = (updatedIntake[key] ?? 0.0) + value;
+      });
+
+      print("Saving daily intake with key: $storageKey");
+      print("Data being saved: $updatedIntake");
+
+      await prefs.setString(storageKey, jsonEncode(updatedIntake));
+      dailyIntake = updatedIntake; // Update the current dailyIntake
+
+      // Verify the save
+      final savedData = prefs.getString(storageKey);
+      print("Verification - Saved data: $savedData");
+    } catch (e) {
+      print("Error saving daily intake: $e");
+    }
   }
 
-  void addToDailyIntake(BuildContext context, Function(int) updateIndex) {
-    if (parsedNutrients.isNotEmpty) {
-      final nutrientMappings = {
-        // Basic macronutrients
-        'Energy': 'Energy',
-        'Total Fat': 'Fat',
-        'Total Sugars': 'Sugar',
-        'Protein': 'Protein',
-        'Carbohydrate': 'Carbohydrate',
-        'Dietary Fiber': 'Fiber',
+  Future<void> addToFoodHistory({
+    required String foodName,
+    required Map<String, double> nutrients,
+    required String source,
+  }) async {
+    print("Adding to food history: $foodName");
+    print("With nutrients: $nutrients");
+    print("Source: $source");
 
-        // Vitamins
-        'Vitamin A': 'Vitamin A',
-        'Vitamin B6': 'Vitamin B6',
-        'Vitamin B9': 'Vitamin B9',
-        'Vitamin B12': 'Vitamin B12',
-        'Vitamin C': 'Vitamin C',
-        'Vitamin D': 'Vitamin D',
-        'Vitamin E': 'Vitamin E',
-        'Vitamin K': 'Vitamin K',
-        'Thiamin': 'Thiamin',
-        'Riboflavin': 'Riboflavin',
-        'Niacin': 'Niacin',
-        'Folate': 'Folate/Folic Acid',
-        'Pantothenic Acid': 'Pantothenic Acid',
-        'Biotin': 'Biotin',
+    // Load existing history first
+    await loadFoodHistory();
 
-        // Minerals
-        'Calcium': 'Calcium',
-        'Iron': 'Iron',
-        'Magnesium': 'Magnesium',
-        'Phosphorus': 'Phosphorus',
-        'Zinc': 'Zinc',
-        'Copper': 'Copper',
-        'Manganese': 'Manganese',
-        'Selenium': 'Selenium',
-        'Chromium': 'Chromium',
-        'Molybdenum': 'Molybdenum',
-        'Chloride': 'Chloride',
-        'Potassium': 'Potassium',
-        'Choline': 'Choline',
-        'Sodium': 'Sodium',
+    final consumption = FoodConsumption(
+      foodName: foodName,
+      dateTime: DateTime.now(),
+      nutrients: nutrients,
+      source: source,
+    );
 
-        // Other nutrients
-        'Cholesterol': 'Cholesterol',
-        'Iodine': 'Iodine'
-      };
+    // Add new item to existing history
+    _foodHistory.add(consumption);
+    print("Updated food history length: ${_foodHistory.length}");
+
+    await _saveFoodHistory();
+  }
+
+  Future<void> loadFoodHistory() async {
+    print("Loading food history from storage...");
+    final prefs = await SharedPreferences.getInstance();
+    final String? storedHistory = prefs.getString('food_history');
+
+    if (storedHistory != null) {
+      print("Found stored food history");
+      try {
+        final List<dynamic> decoded = jsonDecode(storedHistory);
+        print("Decoded food history items: ${decoded.length}");
+
+        // Create new list instead of clearing existing one
+        _foodHistory =
+            decoded.map((item) => FoodConsumption.fromJson(item)).toList();
+
+        print("Successfully loaded ${_foodHistory.length} food items");
+        _foodHistory.forEach((item) {
+          print("Loaded item: ${item.foodName} on ${item.dateTime}");
+        });
+      } catch (e) {
+        print("Error loading food history: $e");
+        _foodHistory = [];
+      }
+    } else {
+      print("No stored food history found");
+      _foodHistory = [];
+    }
+  }
+
+  Future<void> _saveFoodHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = _foodHistory.map((item) => item.toJson()).toList();
+      print("Saving food history with ${historyJson.length} items");
+
+      await prefs.setString('food_history', jsonEncode(historyJson));
+
+      // Verify the save
+      final savedData = prefs.getString('food_history');
+      final decodedSave =
+          savedData != null ? jsonDecode(savedData) as List : [];
+      print("Verification - Saved food history items: ${decodedSave.length}");
+    } catch (e) {
+      print("Error saving food history: $e");
+    }
+  }
+
+  void addToDailyIntake(
+      BuildContext context, Function(int) updateIndex, String source) async {
+    print("Adding to daily intake. Source: $source");
+    print("Current daily intake before: $dailyIntake");
+
+    Map<String, double> newNutrients = {};
+
+    if (source == 'label' && parsedNutrients.isNotEmpty) {
       for (var nutrient in parsedNutrients) {
         final name = nutrient['name'];
-        // Map the nutrient name if a mapping exists
-        final mappedName = nutrientMappings[name] ?? name;
-
         final quantity = double.tryParse(
                 nutrient['quantity'].replaceAll(RegExp(r'[^0-9\.]'), '')) ??
             0;
         double adjustedQuantity = quantity * (sliderValue / _servingSize);
-
-        if (dailyIntake.containsKey(mappedName)) {
-          dailyIntake[mappedName] = dailyIntake[mappedName]! + adjustedQuantity;
-        } else {
-          dailyIntake[mappedName] = adjustedQuantity;
-        }
+        newNutrients[name] = adjustedQuantity;
       }
-    } else if (totalPlateNutrients.isNotEmpty) {
-      // Map the nutrient names to match the daily intake format
-      final nutrientMappings = {
-        'calories': 'Energy',
-        'protein': 'Protein',
-        'carbohydrates':
-            'Carbohydrate', // Changed from 'Carbohydrates' to 'Carbohydrate'
-        'fat': 'Total Fat',
-        'fiber': 'Fiber'
+    } else if (source == 'food' && totalPlateNutrients.isNotEmpty) {
+      newNutrients = {
+        'Energy': (totalPlateNutrients['calories'] ?? 0).toDouble(),
+        'Protein': (totalPlateNutrients['protein'] ?? 0).toDouble(),
+        'Carbohydrate': (totalPlateNutrients['carbohydrates'] ?? 0).toDouble(),
+        'Fat': (totalPlateNutrients['fat'] ?? 0).toDouble(),
+        'Fiber': (totalPlateNutrients['fiber'] ?? 0).toDouble(),
       };
-
-      nutrientMappings.forEach((key, formalName) {
-        if (totalPlateNutrients[key] != null) {
-          dailyIntake[formalName] =
-              (dailyIntake[formalName] ?? 0.0) + totalPlateNutrients[key]!;
-        }
-      });
     }
-    saveDailyIntake();
+
+    // Update dailyIntake with new nutrients
+    newNutrients.forEach((key, value) {
+      dailyIntake[key] = (dailyIntake[key] ?? 0.0) + value;
+    });
+
+    await addToFoodHistory(
+      foodName: source == 'label' ? _productName : _mealName,
+      nutrients: newNutrients,
+      source: source,
+    );
+
+    print("Updated daily intake before saving: $dailyIntake");
+    await saveDailyIntake();
+    updateIndex(2);
   }
 
   double getServingSize() => _servingSize;
@@ -302,6 +379,19 @@ Strictly follow these rules:
       parsedNutrients = (_nutritionAnalysis['nutrients'] as List)
           .cast<Map<String, dynamic>>();
 
+      parsedNutrients = (_nutritionAnalysis['nutrients'] as List)
+          .cast<Map<String, dynamic>>()
+          .map((nutrient) {
+        // Handle null values by providing default values
+        return {
+          'name': nutrient['name'] ?? 'Unknown',
+          'quantity': nutrient['quantity'] ?? '0',
+          'daily_value': nutrient['daily_value'] ?? '0%',
+          'status': nutrient['status'] ?? 'Moderate',
+          'health_impact': nutrient['health_impact'] ?? 'Moderate',
+        };
+      }).toList();
+
       // Clear and update good/bad nutrients
       goodNutrients.clear();
       badNutrients.clear();
@@ -342,6 +432,7 @@ Strictly follow these rules:
 Provide response in this strict JSON format:
 {
   "plate_analysis": {
+  "meal_name": "Name of the meal",
     "items": [
       {
         "food_name": "Name of the food item",
@@ -397,7 +488,7 @@ Consider:
           );
           final jsonResponse = jsonDecode(jsonString);
           final plateAnalysis = jsonResponse['plate_analysis'];
-
+          _mealName = plateAnalysis['meal_name'] ?? 'Unknown Meal';
           // Clear previous analysis
           analyzedFoodItems.clear();
 
