@@ -12,6 +12,7 @@ import 'package:read_the_label/widgets/nutrient_balance_card.dart';
 import 'package:read_the_label/widgets/nutrient_tile.dart';
 import 'package:read_the_label/data/nutrient_insights.dart';
 import 'package:read_the_label/widgets/total_nutrients_card.dart';
+import 'package:rive/rive.dart' as rive;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:read_the_label/logic.dart';
 import 'data/dv_values.dart';
@@ -328,40 +329,17 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: [
                           Image(image: FileImage(_logic.frontImage!)),
                           if (_logic.getIsLoading() && _isScanning)
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              top: _scanLinePosition,
-                              child: Container(
-                                height: 2,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0),
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.8),
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0),
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.3),
-                                      blurRadius: 8,
-                                      spreadRadius: 4,
-                                    ),
-                                  ],
-                                ),
+                            const Positioned.fill(
+                              left: 5,
+                              right: 5,
+                              top: 5,
+                              bottom: 5,
+                              child: rive.RiveAnimation.asset(
+                                'assets/riveAssets/qr_code_scanner.riv',
+                                fit: BoxFit.fill,
+                                artboard: 'scan_board',
+                                animations: ['anim1'],
+                                stateMachines: ['State Machine 1'],
                               ),
                             ),
                         ],
@@ -455,26 +433,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
-                    Container(
-                      width: 50,
+                    const SizedBox(
                       height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.2),
-                            blurRadius: 12,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.primary),
-                        strokeWidth: 3,
+                      width: 50,
+                      child: rive.RiveAnimation.asset(
+                        'assets/riveAssets/ai_generate_loading.riv',
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -1064,31 +1028,16 @@ class _FoodScanPageState extends State<FoodScanPage> {
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 24.0),
                 child: Column(
+                  spacing: 16,
                   children: [
-                    const SizedBox(height: 16),
-                    Container(
-                      width: 50,
+                    const SizedBox(
                       height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.2),
-                            blurRadius: 12,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.primary),
-                        strokeWidth: 3,
+                      width: 50,
+                      child: rive.RiveAnimation.asset(
+                        'assets/riveAssets/ai_generate_loading.riv',
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 16),
                     Text(
                       "Analyzing nutrition label...",
                       style: TextStyle(
