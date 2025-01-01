@@ -21,6 +21,17 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+extension CustomColors on ColorScheme {
+  Color get accent => const Color(0xFF61DAFB);
+  Color get neutral => const Color(0xFF808080);
+  Color get success => const Color(0xFF4CAF50);
+  Color get warning => const Color(0xFFFFA726);
+  Color get info => const Color(0xFF29B6F6);
+  Color get background => const Color(0xFF121212);
+  Color get cardBackground => const Color(0xFF1E1E1E);
+  Color get divider => const Color(0xFF2D2D2D);
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -33,26 +44,26 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Poppins',
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4CAF50),
+          seedColor: const Color(0xFF4E7BFF),
           brightness: Brightness.light,
-          surface: const Color.fromARGB(255, 217, 223, 216),
-          primary: const Color.fromARGB(255, 203, 200, 112),
-          secondary: const Color(0xFF7CB342),
-          tertiary: const Color.fromARGB(255, 206, 158, 140),
-          error: const Color(0xFFD32F2F),
-          onSurface: Colors.black,
+          surface: const Color(0xFF121212),
+          primary: const Color(0xFF4E7BFF),
+          secondary: const Color(0xFF9C72FF),
+          tertiary: const Color(0xFFFFB300),
+          error: const Color(0xFFFF5C5C),
+          onSurface: Colors.white,
           onPrimary: Colors.white,
           onSecondary: Colors.white,
           onError: Colors.white,
         ),
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.black),
-          bodyMedium: TextStyle(color: Colors.black),
-          titleLarge: TextStyle(color: Colors.black),
-          titleMedium: TextStyle(color: Colors.black),
-          titleSmall: TextStyle(color: Colors.black),
-          labelLarge: TextStyle(color: Colors.white),
-          labelMedium: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
+          titleSmall: TextStyle(color: Colors.white),
+          labelLarge: TextStyle(color: Colors.black),
+          labelMedium: TextStyle(color: Colors.black),
         ),
       ),
       home: const MyHomePage(),

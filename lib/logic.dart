@@ -272,6 +272,59 @@ class Logic {
     return double.tryParse(quantity) ?? 0.0;
   }
 
+  String getUnit(String nutrient) {
+    switch (nutrient.toLowerCase()) {
+      case 'energy':
+        return ' kcal';
+      case 'protein':
+      case 'carbohydrate':
+      case 'fat':
+      case 'fiber':
+      case 'sugar':
+        return 'g';
+      case 'sodium':
+      case 'potassium':
+      case 'calcium':
+      case 'iron':
+        return 'mg';
+      default:
+        return '';
+    }
+  }
+
+  IconData getNutrientIcon(String nutrient) {
+    switch (nutrient.toLowerCase()) {
+      case 'energy':
+        return Icons.bolt;
+      case 'protein':
+        return Icons.fitness_center;
+      case 'carbohydrate':
+        return Icons.grain;
+      case 'fat':
+        return Icons.opacity;
+      case 'fiber':
+        return Icons.grass;
+      case 'sodium':
+        return Icons.water_drop;
+      case 'calcium':
+        return Icons.shield;
+      case 'iron':
+        return Icons.architecture;
+      case 'vitamin':
+        return Icons.brightness_high;
+      default:
+        return Icons.science;
+    }
+  }
+
+  Color getColorForPercent(double percent, BuildContext context) {
+    if (percent > 1.0) return Theme.of(context).colorScheme.error;
+    if (percent > 0.8)
+      return Theme.of(context).colorScheme.error.withOpacity(0.8);
+    if (percent > 0.6) return Theme.of(context).colorScheme.primary;
+    return Theme.of(context).colorScheme.tertiary;
+  }
+
   Future<String> analyzeImages(
       {required Function(void Function()) setState}) async {
     _isLoading = true;

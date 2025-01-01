@@ -46,7 +46,7 @@ class NutrientBalanceCard extends StatelessWidget {
               child: Text(
                 issue,
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium!.color,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   fontFamily: 'Poppins',
@@ -137,7 +137,7 @@ class _RecommendationItem extends StatelessWidget {
                       TextSpan(
                         text: food,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onBackground,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
