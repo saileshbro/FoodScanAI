@@ -1,16 +1,13 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-import 'package:path/path.dart' as path;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:read_the_label/logic.dart';
-import 'package:read_the_label/main.dart';
 
 class AskAiPage extends StatefulWidget {
   String mealName;
@@ -77,10 +74,10 @@ class _AskAiPageState extends State<AskAiPage> {
         apiKey: apiKey!,
         systemInstruction: Content.system('''
           You are a helpful friendly assistant specialized in providing nutritional information and guidance about meals.
-          
+
           Current meal context:
           $nutritionContext
-          
+
           Base your answers on this specific nutritional data when discussing this meal.
             Answer questions clearly, with relevant icons, and keep responses concise. Use emojis to make the text more user-friendly and engaging.
         '''),
@@ -118,7 +115,6 @@ class _AskAiPageState extends State<AskAiPage> {
               width: double.infinity,
               margin: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.cardBackground,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Stack(
@@ -200,7 +196,6 @@ class _AskAiPageState extends State<AskAiPage> {
                 style: LlmChatViewStyle(
                   suggestionStyle: SuggestionStyle(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.cardBackground,
                         borderRadius: BorderRadius.circular(28),
                       ),
                       textStyle: TextStyle(
@@ -243,7 +238,6 @@ class _AskAiPageState extends State<AskAiPage> {
                   addButtonStyle: ActionButtonStyle(
                     iconColor: Theme.of(context).colorScheme.onSurface,
                     iconDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.cardBackground,
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
@@ -251,8 +245,6 @@ class _AskAiPageState extends State<AskAiPage> {
                     textStyle: const TextStyle(
                       fontFamily: 'Poppins',
                     ),
-                    backgroundColor:
-                        Theme.of(context).colorScheme.cardBackground,
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(28),
@@ -262,7 +254,6 @@ class _AskAiPageState extends State<AskAiPage> {
                       markdownStyle:
                           MarkdownStyleSheet.fromTheme(Theme.of(context)),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.cardBackground,
                         borderRadius: BorderRadius.circular(28),
                       ),
                       iconDecoration: BoxDecoration(
@@ -272,7 +263,6 @@ class _AskAiPageState extends State<AskAiPage> {
                       iconColor: Colors.white),
                   userMessageStyle: UserMessageStyle(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.cardBackground,
                       borderRadius: BorderRadius.circular(28),
                     ),
                     textStyle: TextStyle(

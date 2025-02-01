@@ -40,10 +40,9 @@ Widget NutrientCard(BuildContext context, Map<String, dynamic> nutrient,
             Expanded(
               child: Text(
                 name,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onTertiary,
                   fontFamily: 'Poppins',
                 ),
                 maxLines: 1,

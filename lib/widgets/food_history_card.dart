@@ -24,6 +24,7 @@ class FoodHistoryCard extends StatefulWidget {
 }
 
 class _FoodHistoryCardState extends State<FoodHistoryCard> {
+  @override
   Widget build(context) {
     return Container(
       decoration: BoxDecoration(
@@ -183,23 +184,9 @@ class _FoodHistoryCardState extends State<FoodHistoryCard> {
             },
             child: Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color.fromARGB(255, 237, 202, 149),
-                    Color.fromARGB(255, 253, 142, 81),
-                    Color.fromARGB(255, 255, 0, 85),
-                    Color.fromARGB(255, 0, 21, 255),
-                  ],
-                  stops: [0.2, 0.4, 0.6, 1.0],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.add,
                     color: Color.fromARGB(255, 0, 21, 255),
                   ),
@@ -208,19 +195,6 @@ class _FoodHistoryCardState extends State<FoodHistoryCard> {
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,
-                      foreground: Paint()
-                        ..shader = const LinearGradient(
-                          colors: <Color>[
-                            Color.fromARGB(255, 0, 21, 255),
-                            Color.fromARGB(255, 255, 0, 85),
-                            Color.fromARGB(255, 250, 220, 194),
-                          ],
-                          stops: [0.3, 0.5, 0.8], // Four stops for four colors
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ).createShader(
-                          const Rect.fromLTWH(0.0, 0.0, 250.0, 16.0),
-                        ),
                     ),
                   ),
                 ],

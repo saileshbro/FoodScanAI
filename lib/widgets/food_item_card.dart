@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:read_the_label/logic.dart';
-import 'package:read_the_label/main.dart';
 import 'package:read_the_label/widgets/food_nutreint_tile.dart';
+
 import '../models/food_item.dart';
-import 'nutrient_tile.dart';
 
 class FoodItemCard extends StatelessWidget {
   final FoodItem item;
@@ -22,13 +21,11 @@ class FoodItemCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -47,10 +44,9 @@ class FoodItemCard extends StatelessWidget {
                   Flexible(
                     child: Text(
                       item.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
                       ),
                       overflow: TextOverflow.visible,
                       softWrap: true,
@@ -165,8 +161,7 @@ class FoodItemCard extends StatelessWidget {
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             hintText: 'Enter quantity in ${item.unit}',
-            hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            hintStyle: const TextStyle(
               fontFamily: 'Poppins',
             ),
             border: OutlineInputBorder(

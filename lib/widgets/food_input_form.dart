@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:read_the_label/logic.dart';
-import 'package:read_the_label/main.dart';
-import 'package:read_the_label/screens/foodAnalysisScreen.dart';
 
 class FoodInputForm extends StatefulWidget {
   final Logic logic;
   final VoidCallback onSubmit;
 
   const FoodInputForm({
-    Key? key,
+    super.key,
     required this.logic,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   @override
   State<FoodInputForm> createState() => _FoodInputFormState();
@@ -102,31 +100,14 @@ class _FoodInputFormState extends State<FoodInputForm> {
                                   .onSurface
                                   .withValues(alpha: 0.5),
                             ),
-                            fillColor:
-                                Theme.of(context).colorScheme.cardBackground,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .cardBackground,
-                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .cardBackground,
-                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .cardBackground,
-                              ),
                             ),
                           ),
                         ),

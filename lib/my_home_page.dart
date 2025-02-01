@@ -2,31 +2,30 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:read_the_label/main.dart';
-import 'package:read_the_label/models/food_item.dart';
+import 'package:read_the_label/data/nutrient_insights.dart';
+import 'package:read_the_label/logic.dart';
 import 'package:read_the_label/screens/ask_AI_page.dart';
 import 'package:read_the_label/widgets/ask_ai_widget.dart';
-import 'package:read_the_label/widgets/food_item_card_shimmer.dart';
-import 'package:read_the_label/widgets/nutrient_info_shimmer.dart';
-import 'package:read_the_label/widgets/total_nutrients_card_shimmer.dart';
 import 'package:read_the_label/widgets/date_selector.dart';
 import 'package:read_the_label/widgets/detailed_nutrients_card.dart';
 import 'package:read_the_label/widgets/food_history_card.dart';
 import 'package:read_the_label/widgets/food_item_card.dart';
+import 'package:read_the_label/widgets/food_item_card_shimmer.dart';
 import 'package:read_the_label/widgets/header_widget.dart';
 import 'package:read_the_label/widgets/macronutrien_summary_card.dart';
 import 'package:read_the_label/widgets/nutrient_balance_card.dart';
+import 'package:read_the_label/widgets/nutrient_info_shimmer.dart';
 import 'package:read_the_label/widgets/nutrient_tile.dart';
-import 'package:read_the_label/data/nutrient_insights.dart';
 import 'package:read_the_label/widgets/total_nutrients_card.dart';
+import 'package:read_the_label/widgets/total_nutrients_card_shimmer.dart';
 import 'package:rive/rive.dart' as rive;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:read_the_label/logic.dart';
+
 import 'widgets/portion_buttons.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -71,7 +70,6 @@ class _MyHomePageState extends State<MyHomePage> {
           style: ElevatedButton.styleFrom(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            backgroundColor: Theme.of(context).colorScheme.cardBackground,
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
@@ -172,7 +170,6 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: Theme.of(context).colorScheme.cardBackground,
         child: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
@@ -264,7 +261,6 @@ class _MyHomePageState extends State<MyHomePage> {
               margin: const EdgeInsets.all(20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.cardBackground,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.transparent),
               ),
@@ -475,8 +471,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
               ),
-            if (_logic.nutritionAnalysis != null &&
-                _logic.nutritionAnalysis['primary_concerns'] != null)
+            if (_logic.nutritionAnalysis['primary_concerns'] != null)
               ..._logic.nutritionAnalysis['primary_concerns'].map(
                 (concern) => NutrientBalanceCard(
                   issue: concern['issue'] ?? '',
@@ -517,9 +512,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
-                                backgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .cardBackground,
                                 title: Text('Edit Serving Size',
                                     style: TextStyle(
                                         color: Theme.of(context)
@@ -841,7 +833,6 @@ class _FoodScanPageState extends State<FoodScanPage> {
               margin: const EdgeInsets.all(20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.cardBackground,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.transparent),
               ),
@@ -1010,7 +1001,6 @@ class _FoodScanPageState extends State<FoodScanPage> {
           style: ElevatedButton.styleFrom(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            backgroundColor: Theme.of(context).colorScheme.cardBackground,
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),

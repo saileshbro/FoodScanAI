@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:read_the_label/main.dart';
+
 import '../logic.dart';
 
 class TotalNutrientsCard extends StatelessWidget {
@@ -39,7 +39,6 @@ class TotalNutrientsCard extends StatelessWidget {
                       const Text(
                         'Total Nutrients',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -47,8 +46,7 @@ class TotalNutrientsCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '${logic.analyzedFoodItems.length} items',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                        style: const TextStyle(
                           fontSize: 16,
                         ),
                       ),
@@ -65,7 +63,6 @@ class TotalNutrientsCard extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.restaurant_menu,
-                      color: Colors.white,
                       size: 24,
                     ),
                   ),
@@ -75,10 +72,8 @@ class TotalNutrientsCard extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.cardBackground,
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
             child: Column(
               children: [
@@ -129,7 +124,6 @@ class TotalNutrientsCard extends StatelessWidget {
                   icon: const Icon(Icons.add_circle_outline),
                   label: const Text('Add to today\'s intake'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
                     foregroundColor: Theme.of(context).colorScheme.primary,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
@@ -156,7 +150,6 @@ class TotalNutrientsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: Theme.of(context).colorScheme.primary),
@@ -180,10 +173,7 @@ class TotalNutrientsCard extends StatelessWidget {
             ],
           ),
         ),
-        if (!isLast)
-          Divider(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-          ),
+        if (!isLast) const Divider(),
       ],
     );
   }
